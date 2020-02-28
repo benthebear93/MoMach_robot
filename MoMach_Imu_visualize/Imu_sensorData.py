@@ -1,24 +1,45 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import mscl
-import matplotlib.animation as ani
 from collections import deque
-
+import random
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
+from itertools import count
 COM_PORT = "COM3"
-data_X = []
-data_Y = []
-data_Z = []
-MAX_X = 100   #width of graph
-MAX_Y = 5  #height of graph
+scaled_X = []
+scaled_Y = []
+scaled_Z = []
+gyro_X = []
+gyro_Y = []
+gyro_Z = []
 
+Z_val = []
+Y_val = []
+X_val = []
+gX_val = []
+gY_val = []
+gZ_val = []
+
+x_val = []
+index = count()
 def scaled_XYZ_data(name, coord):
     if name[-1] == "X":
-        data_X.append(coord)
+        if name[6] == "A":
+            scaled_X.append(coord)
+        else:
+            gyro_X.append(coord)
     elif name[-1] == "Y":
-        data_Y.append(coord)
+        if name[6] == "A":
+            scaled_Y.append(coord)
+        else:
+            gyro_Y.append(coord)
     else:
-        data_Z.append(coord)
-    print("data_x :", data_X)
+        if name[6] == "A":
+            scaled_Z.append(coord)
+        else:
+            gyro_Z.append(coord)
+    #print("scaled_X :", scaled_X)
 
 def getSensorData():
     connection = mscl.Connection.Serial(COM_PORT, 115200)
@@ -40,10 +61,6 @@ def getSensorData():
     node.enableDataStream(mscl.MipTypes.CLASS_AHRS_IMU)
     node.enableDataStream(mscl.MipTypes.CLASS_ESTFILTER)
     node.resume()
-    fig, ax = plt.subplots(1,1)
-    ax.set_xlim(0,100)
-    ax.set_ylim(-2, 2)
-
     while True:
         # get all the packets that have been collected, with a timeout of 500 milliseconds
         packets = node.getDataPackets(100)
@@ -59,8 +76,44 @@ def getSensorData():
                 dataPoint.storedAs()  # the ValueType that the data is stored as
                 dataPoint.as_float()  # get the value as a float
                 #print(dataPoint.channelName(), " :", dataPoint.as_float())
-                # print(dataPoint.as_float())
                 scaled_XYZ_data(dataPoint.channelName(), dataPoint.as_float())
+        if(len(scaled_X) > 1000):
+            break
+
+def animate(i):
+    x_val.append(next(index))
+
+    X_val.append(scaled_X.popleft())
+    Y_val.append(scaled_Y.popleft())
+    Z_val.append(scaled_Z.popleft())
+    gX_val.append(gyro_X.popleft())
+    gY_val.append(gyro_Y.popleft())
+    gZ_val.append(gyro_Z.popleft())
+    fig, ax = plt.subplots()
+    plt.cla()
+
+    ax.plot(x_val, X_val, label='scaled x ')
+    ax.plot(x_val, Y_val, label='scaled y')
+    ax.plot(x_val, Z_val, label='scaled z')
+
+    ax.plot(x_val, gX_val, label='gyro x')
+    ax.plot(x_val, gY_val, label='gyro y')
+    ax.plot(x_val, gZ_val, label='gyro z')
+    ax.set_title('IMU Sensor')
+    #ax.set_xlable('X')
+    #ax.set_ylable('Y')
+    ax.legend(loc='upper left')
+    plt.tight_layout()
 
 if __name__ == "__main__":
     getSensorData()
+    scaled_X = deque(scaled_X)
+    scaled_Y = deque(scaled_Y)
+    scaled_Z = deque(scaled_Z)
+    gyro_X = deque(gyro_X)
+    gyro_Y = deque(gyro_Y)
+    gyro_Z = deque(gyro_Z)
+
+    ani = animation.FuncAnimation(plt.gcf(), animate, interval=1)
+    plt.tight_layout()
+    plt.show()
