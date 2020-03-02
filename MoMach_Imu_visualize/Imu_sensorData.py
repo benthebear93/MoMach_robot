@@ -7,40 +7,13 @@ import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 from itertools import count
 COM_PORT = "COM3"
-scaled_X = deque([])
-scaled_Y = deque([])
-scaled_Z = deque([])
-gyro_X = deque([])
-gyro_Y = deque([])
-gyro_Z = deque([])
 
-Z_val = []
-Y_val = []
-X_val = []
-gX_val = []
-gY_val = []
-gZ_val = []
-
-x_val = []
-index = count()
-
-def scaled_XYZ_data(name, coord):
-    if name[-1] == "X":
-        if name[6] == "A":
-            scaled_X.append(coord)
-            print("here")
-        else:
-            gyro_X.append(coord)
-    elif name[-1] == "Y":
-        if name[6] == "A":
-            scaled_Y.append(coord)
-        else:
-            gyro_Y.append(coord)
-    else:
-        if name[6] == "A":
-            scaled_Z.append(coord)
-        else:
-            gyro_Z.append(coord)
+x_x_axis = []
+x_y_axis = []
+x_z_axis = []
+scaled_x = []
+scaled_y = []
+scaled_z = []
 
 def getSensorData():
     connection = mscl.Connection.Serial(COM_PORT, 115200)
@@ -69,52 +42,46 @@ def getSensorData():
     # start sampling on the AHRS/IMU, GNSS class of the Node
     node.enableDataStream(mscl.MipTypes.CLASS_AHRS_IMU)
     node.enableDataStream(mscl.MipTypes.CLASS_ESTFILTER)
-    node.resume()
+
     while True:
         # get all the packets that have been collected, with a timeout of 500 milliseconds
         packets = node.getDataPackets(0)
         # print("packet data type :", type(packets))
+        i = 0
         for packet in packets:
             packet.descriptorSet()  # the descriptor set of the packet
-            a =packet.collectedTimestamp()  # the PC time when this packet was received
-            # get all of the points in the packet
+            # a =packet.collectedTimestamp()  # the PC time when this packet was received
+            # # get all of the points in the packet
             points = packet.data()  # def data(self): return _mscl.MipDataPacket_data(self)
             for dataPoint in points:
-                print("time : ", a)
-                dataPoint.channelName()  # the name of the channel for this point
-                #print("datapoints channel Name :", type(dataPoint.channelName()))
-                dataPoint.storedAs()  # the ValueType that the data is stored as
-                dataPoint.as_float()  # get the value as a float
-                scaled_XYZ_data(dataPoint.channelName(), dataPoint.as_float())
-                ani = animation.FuncAnimation(plt.gcf(), animate, interval=100000)
-        plt.tight_layout()
-        plt.show()
+                if(dataPoint.channelName() =='estLinearAccelZ' or dataPoint.channelName()=='estLinearAccelX' or dataPoint.channelName() =='estLinearAccelY'):
+                    break
+                else:
+                    print(dataPoint.channelName())
+                    dataPoint.channelName()  # the name of the channel for this point
+                    dataPoint.storedAs()  # the ValueType that the data is stored as
+                    dataPoint.as_float()  # get the value as a float
+                    if (dataPoint.channelName() == 'scaledGyroX'):
+                        scaled_x.append(dataPoint.as_float())
+                        x_x_axis.append(i)
+                        i += 1
+                    elif(dataPoint.channelName() == 'scaledAccelY'):
+                        scaled_y.append(dataPoint.as_float())
+                    else:
+                        scaled_z.append(dataPoint.as_float())
+                    print("list x : ", x_x_axis)
+                    print("x len is :", len(x_x_axis), "y len is : ", len(scaled_x))
+                    ax.plot(x_x_axis, scaled_x, color='b')
+                    fig.canvas.draw()
+                    ax.set_ylim([-0.1, 0.1])
+                    #ax.set_xlim(left=max(0.0, i - 50.0), right=i + 50.0)
+                    print("scaled x :", scaled_x)
+                    print("scaled y :", scaled_y)
+                    print("scaled z :", scaled_z)
 
-
-def animate(i):
-    x_val.append(next(index))
-    print(scaled_X)
-    X_val.append(scaled_X.popleft())
-    # Y_val.append(scaled_Y.popleft())
-    # Z_val.append(scaled_Z.popleft())
-    # gX_val.append(gyro_X.popleft())
-    # gY_val.append(gyro_Y.popleft())
-    # gZ_val.append(gyro_Z.popleft())
-    plt.cla()
-
-    plt.plot(x_val, X_val, label='scaled x ')
-    #plt.plot(x_val, Y_val, label='scaled y')
-    #plt.plot(x_val, Z_val, label='scaled z')
-
-    #plt.plot(x_val, gX_val, label='gyro x')
-    #plt.plot(x_val, gY_val, label='gyro y')
-    #plt.plot(x_val, gZ_val, label='gyro z')
-    #plt.set_title('IMU Sensor')
-    #ax.set_xlable('X')
-    #ax.set_ylable('Y')
-    plt.legend(loc='upper left')
-    plt.tight_layout()
 
 if __name__ == "__main__":
+    fig = plt.figure(figsize=(5, 5))
+    ax = fig.add_subplot(111)
+    fig.show()
     getSensorData()
-
