@@ -1,4 +1,5 @@
 import sys
+import time
 import os
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -14,6 +15,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import time
 import threading
 import mscl
+import math
 from itertools import count
 COM_PORT = "COM3"
 x_x_axis = []
@@ -22,6 +24,9 @@ x_z_axis = []
 scaled_x = []
 scaled_y = []
 scaled_z = []
+acc_x =[]
+acc_y =[]
+acc_z =[]
 
 class CustomMainWindow(QMainWindow):
     def __init__(self):
@@ -55,15 +60,14 @@ class CustomMainWindow(QMainWindow):
         self.LAYOUT_A.addWidget(self.zoomBtn, *(0, 0))
         self.LAYOUT_A.addWidget(self.zoomBtn2, *(0, 1))
         # Place the matplotlib figure
-        self.myFig = CustomFigCanvas(0)
+        # self.myFig = CustomFigCanvas(0)
         self.myFig2 = CustomFigCanvas(1)
         self.myFig3 = CustomFigCanvas(2)
-        self.LAYOUT_A.addWidget(self.myFig, *(0, 2))
+        # self.LAYOUT_A.addWidget(self.myFig, *(0, 2))
         self.LAYOUT_A.addWidget(self.myFig2, *(1, 2))
-        self.LAYOUT_A.addWidget(self.myFig3, *(2, 2))
+        self.LAYOUT_A.addWidget(self.myFig3, *(0, 2))
         # Add the callbackfunc to ..
-        myDataLoop = threading.Thread(name='myDataLoop', target=dataSendLoop, daemon=True,
-                                      args=(self.addData_callbackFunc, self.addData_callbackFunc2, self.addData_callbackFunc3 ))
+        myDataLoop = threading.Thread(name='myDataLoop', target=dataSendLoop, daemon=True, args=(self.addData_callbackFunc3,)) #self.addData_callbackFunc, self.addData_callbackFunc2,
         myDataLoop.start()
         self.show()
         return
@@ -77,15 +81,16 @@ class CustomMainWindow(QMainWindow):
         print("zoom out")
         self.myFig.zoomOut(0.5)
 
-    def addData_callbackFunc(self, value):
-        #print("Add data: " + str(value))
-        self.myFig.addData(value)
-        return
+    # def addData_callbackFunc(self, value):
+    #     #print("Add data: " + str(value))
+    #     self.myFig.addData(value)
+    #     return
 
-    def addData_callbackFunc2(self, value):
-        # print("Add data: " + str(value))
-        self.myFig2.addData(value)
-        return
+    # def addData_callbackFunc2(self, value):
+    #     # print("Add data: " + str(value))
+    #     self.myFig2.addData(value)
+    #     return
+
     def addData_callbackFunc3(self, value):
         # print("Add data: " + str(value))
         self.myFig3.addData(value)
@@ -181,17 +186,34 @@ class CustomFigCanvas(FigureCanvas, TimedAnimation):
 
 class Communicate(QObject):
     data_signal = pyqtSignal(float)
-
 ''' End Class '''
 
 
-def dataSendLoop(addData_callbackFunc, addData_callbackFunc2, addData_callbackFunc3):
+def gyro2angle(gyro_val, current_angle, prev_time, acc_val):
+    # current gyro val, current angle, current time
+    current_time = time.time()
+    delta_time = current_time - prev_time
+    #print("delta time : ", delta_time)
+    #print("gyro_val", gyro_val)
+    delta_angle = gyro_val * 0.01
+    #print("delta angle:", delta_angle)
+    #print("delta_angle :", delta_angle)
+    current_angle = 0.996*(current_angle + delta_angle) + (1-0.996)*acc_val
+    return current_angle
+    # return prev_time, current_angle
+
+
+def rad2deg(rad):
+    return (rad*180)/math.pi
+
+
+def dataSendLoop(addData_callbackFunc3): #addData_callbackFunc, addData_callbackFunc2,
     connection = mscl.Connection.Serial(COM_PORT, 115200)
     # Setup the signal-slot mechanism.
-    mySrc = Communicate()
-    mySrc.data_signal.connect(addData_callbackFunc)
-    mySrc2 = Communicate()
-    mySrc2.data_signal.connect(addData_callbackFunc2)
+    # mySrc = Communicate()
+    # mySrc.data_signal.connect(addData_callbackFunc)
+    # mySrc2 = Communicate()
+    # mySrc2.data_signal.connect(addData_callbackFunc2)
     mySrc3 = Communicate()
     mySrc3.data_signal.connect(addData_callbackFunc3)
 
@@ -213,26 +235,36 @@ def dataSendLoop(addData_callbackFunc, addData_callbackFunc2, addData_callbackFu
     i = 0
     j = 0
     k = 0
+    yaw_angle = 0
     while True:
-        packets = node.getDataPackets(500) # get packets with time out of 500 milliseconds
+        current_time = time.time()
+        packets = node.getDataPackets(10) # get packets with time out of 10 milliseconds = 0.01s
         for packet in packets:
             points = packet.data()
             for dp in points:
+                print(dp.channelName())
                 if(dp.channelName() =='estLinearAccelZ' or dp.channelName()=='estLinearAccelX' or dp.channelName() =='estLinearAccelY'):
                     break
                 else:
                     if dp.channelName() == 'scaledGyroX':
                         scaled_x.append(dp.as_float())
                         x_x_axis.append(i)
-                        mySrc.data_signal.emit(scaled_x[i])  # <- Here you emit a signal!
+                        #mySrc.data_signal.emit(scaled_x[i])  # <- Here you emit a signal!
                         i += 1
                     elif dp.channelName() == 'scaledGyroY':
-                        scaled_y.append(dp.as_float())
+                        #scaled_y.append(dp.as_float())
                         x_y_axis.append(j)
-                        mySrc2.data_signal.emit(scaled_y[j])
-                        j += 1
+                        #mySrc2.data_signal.emit(scaled_y[j])
+                        #j += 1
+                    if dp.channelName() == 'scaledAccelX':
+                        acc_x.append((dp.as_float()))
+                        print("dp.channelname :", dp.channelName())
                     if dp.channelName()== 'scaledGyroZ':
                         scaled_z.append(dp.as_float())
+                        z_gyro_deg = rad2deg(dp.as_float())
+                        a = acc_x[k]
+                        yaw_angle = gyro2angle(z_gyro_deg, yaw_angle, current_time, a) #rad/s
+                        print("yaw angle : ", yaw_angle)
                         x_z_axis.append(k)
                         mySrc3.data_signal.emit(scaled_z[k])
                         k += 1
