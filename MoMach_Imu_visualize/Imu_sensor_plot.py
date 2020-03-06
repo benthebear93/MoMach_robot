@@ -74,12 +74,14 @@ class CustomMainWindow(QMainWindow):
 
     def zoomBtnAction(self):
         print("zoom in")
-        self.myFig.zoomIn(0.5)
+        self.myFig3.zoomIn(0.5)
         return
 
     def zoomBtnAction2(self):
         print("zoom out")
-        self.myFig.zoomOut(0.5)
+        self.myFig3.zoomOut(0.5)
+        return
+
 
     # def addData_callbackFunc(self, value):
     #     #print("Add data: " + str(value))
@@ -198,7 +200,7 @@ def gyro2angle(gyro_val, current_angle, prev_time, acc_val):
     delta_angle = gyro_val * 0.01
     #print("delta angle:", delta_angle)
     #print("delta_angle :", delta_angle)
-    current_angle = 0.996*(current_angle + delta_angle) + (1-0.996)*acc_val
+    current_angle = current_angle + delta_angle
     return current_angle
     # return prev_time, current_angle
 
@@ -235,6 +237,9 @@ def dataSendLoop(addData_callbackFunc3): #addData_callbackFunc, addData_callback
     i = 0
     j = 0
     k = 0
+    q = 0
+    w = 0
+    e = 0
     yaw_angle = 0
     while True:
         current_time = time.time()
@@ -242,7 +247,7 @@ def dataSendLoop(addData_callbackFunc3): #addData_callbackFunc, addData_callback
         for packet in packets:
             points = packet.data()
             for dp in points:
-                print(dp.channelName())
+                #print(dp.channelName())
                 if(dp.channelName() =='estLinearAccelZ' or dp.channelName()=='estLinearAccelX' or dp.channelName() =='estLinearAccelY'):
                     break
                 else:
@@ -258,7 +263,13 @@ def dataSendLoop(addData_callbackFunc3): #addData_callbackFunc, addData_callback
                         #j += 1
                     if dp.channelName() == 'scaledAccelX':
                         acc_x.append((dp.as_float()))
-                        print("dp.channelname :", dp.channelName())
+                        q += 1
+                    if dp.channelName() == 'scaledAccelY':
+                        acc_y.append((dp.as_float()))
+                        w += 1
+                    if dp.channelName() == 'scaledAccelZ':
+                        acc_z.append((dp.as_float()))
+                        e += 1
                     if dp.channelName()== 'scaledGyroZ':
                         scaled_z.append(dp.as_float())
                         z_gyro_deg = rad2deg(dp.as_float())
@@ -267,7 +278,11 @@ def dataSendLoop(addData_callbackFunc3): #addData_callbackFunc, addData_callback
                         print("yaw angle : ", yaw_angle)
                         x_z_axis.append(k)
                         mySrc3.data_signal.emit(scaled_z[k])
+                        print("k", k, ": ", scaled_z, scaled_z[k])
                         k += 1
+            pitch = 180*math.atan2(acc_x[q-1], math.sqrt(acc_y[w-1]*acc_y[w-1] + acc_z[e-1]*acc_z[e-1]))/math.pi
+            roll = 180*math.atan2(acc_y[w-1], math.sqrt(acc_x[q-1]*acc_x[q-1] + acc_z[e-1]*acc_z[e-1]))/math.pi
+            print("yaw is :", yaw_angle, "        pitch is :", pitch, "          roll is :", roll)
 
 if __name__== '__main__':
     app = QApplication(sys.argv)
