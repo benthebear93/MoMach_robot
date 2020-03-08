@@ -16,7 +16,7 @@
 #include "std_msgs/MultiArrayLayout.h"
 #include "std_msgs/String.h"
 #include "std_msgs/Float32.h"
-
+#include <visualization_msgs/Marker.h>
 #include "mscl/mscl.h"
 
 namespace MoMach_Imu{
@@ -25,8 +25,8 @@ namespace MoMach_Imu{
         public:
             MoMach_Imu();
             ~MoMach_Imu();
-
-        void run();
+            void run();
+            float gyro_to_angle(float gyro_val, float current_angle);
 
         private:
             float ahrs_acc_x;
@@ -35,6 +35,14 @@ namespace MoMach_Imu{
             float ahrs_gyro_x;
             float ahrs_gyro_y;
             float ahrs_gyro_z;
+            ros::Publisher acc_x_pub;
+            ros::Publisher acc_y_pub;
+            ros::Publisher acc_z_pub;
+            ros::Publisher gyro_x_pub;
+            ros::Publisher gyro_y_pub;
+            ros::Publisher gyro_z_pub;
+            ros::Publisher marker_pub;
+            ros::NodeHandle *nh;
     };
 }
 #endif
