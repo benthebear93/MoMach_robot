@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <iostream>
 #include <time.h>
-
+#include <vector>
 #include "ros/ros.h"
 #include "ros/console.h"
 #include "sensor_msgs/NavSatFix.h"
@@ -29,15 +29,17 @@ namespace MoMach_Imu{
             void run();
             float gyro_to_angle(float gyro_val, float current_angle);
             float rad2deg(float rad);
+            float *RP_calculate(float *acc_v);
 
         private:
-            float gyx_temp = 0.;
-            float gyy_temp = 0.;
-            float gyz_temp = 0.;
-            float accx_temp = 0.;
-            float accy_temp = 0.;
-            float accz_temp = 0.;
-
+            float gyx_temp = 0;
+            float gyy_temp = 0;
+            float gyz_temp = 0;
+            float accx_temp = 0;
+            float accy_temp = 0;
+            float accz_temp = 0;
+            float acc_buff[2] = {0, };
+            float RPY_buff[2] = {0, };
             std_msgs::Float32 Data_gx;
             std_msgs::Float32 Data_gy;
             std_msgs::Float32 Data_gz;
@@ -53,7 +55,6 @@ namespace MoMach_Imu{
             ros::Publisher gyro_y_pub;
             ros::Publisher gyro_z_pub;
             ros::Publisher marker_pub;
-            ros::NodeHandle *nh;
     };
 }
 #endif
