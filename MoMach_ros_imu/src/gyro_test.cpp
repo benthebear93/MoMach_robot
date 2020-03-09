@@ -30,15 +30,20 @@ namespace MoMach_Imu{
         return ans;
     }   
 
-    float *MoMach_Imu::RP_calculate(float *acc){
-        // cout<<"first z             : "<<acc[2]<<endl;
+    float *MoMach_Imu::RP_calculate(float acc[]){
         float roll = atan2(acc[1], acc[2]);
-        //float pitch = atan2((-acc[0]), sqrt(acc[1]*acc[1] + acc[2]*acc[2]));
+        float pitch = atan2((acc[0]), sqrt(acc[1]*acc[1] + acc[2]*acc[2]));
         RPY_buff[0] = roll;
-        //RPY_buff[1] = pitch;
-        // cout<<"after z             : "<<acc[2]<<endl;
+        RPY_buff[1] = pitch;
         return RPY_buff;
-    }  
+    } 
+    float *MoMach_Imu::Complentary(float acc_rpy[], float gyro_rpy[]){
+        const float alpha = 0.996;
+        for(int i =0; i < 2; i++){
+            filitered_rpy[i] = alpha*(gyro_rpy[i] * 0.01 + filitered_rpy[i]) + (1-alpha) * acc_rpy[i];
+        }
+        return filitered_rpy;
+    }
 
     void MoMach_Imu::run(){
 
@@ -60,6 +65,7 @@ namespace MoMach_Imu{
             ahrsImuChs.push_back(mscl::MipChannel(mscl::MipTypes::CH_FIELD_SENSOR_SCALED_GYRO_VEC, mscl::SampleRate::Hertz(100)));
             node.setActiveChannelFields(mscl::MipTypes::CLASS_AHRS_IMU, ahrsImuChs);
             node.enableDataStream(mscl::MipTypes::CLASS_AHRS_IMU);
+            //pub_topics 
 
             acc_x_pub = n.advertise<std_msgs::Float32>("acc_x", 100);
             acc_y_pub = n.advertise<std_msgs::Float32>("acc_y", 100);
@@ -67,13 +73,22 @@ namespace MoMach_Imu{
             gyro_x_pub = n.advertise<std_msgs::Float32>("gyro_x", 100);
             gyro_y_pub = n.advertise<std_msgs::Float32>("gyro_y", 100);
             gyro_z_pub = n.advertise<std_msgs::Float32>("gyro_z", 100);
+
+            acc_roll_pub = n.advertise<std_msgs::Float32>("acc_roll", 100);
+            acc_pitch_pub = n.advertise<std_msgs::Float32>("acc_pitch", 100);
+            filt_roll_pub = n.advertise<std_msgs::Float32>("filt_roll", 100);
+            filt_pitch_pub = n.advertise<std_msgs::Float32>("filt_pitch", 100);
+
+            //visual marker
             marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
             uint32_t shape = visualization_msgs::Marker::CUBE;
 
+            //rate setting
             int max_rate = 10;
             int spin_rate = min(2 * max_rate, 1000);
             ROS_INFO("Setting spin rate to <%d>", spin_rate);
             ros::Rate r(spin_rate); // Rate in Hz
+
             while(ros::ok())
             {
                 visualization_msgs::Marker marker;
@@ -85,53 +100,39 @@ namespace MoMach_Imu{
                 marker.type = shape;
                 // Set the marker action.  Options are ADD, DELETE, and new in ROS Indigo: 3 (DELETEALL)
                 marker.action = visualization_msgs::Marker::ADD;
-                //get all the packets that have been collected, with a timeout of 500 milliseconds
+                
                 try{
-                    mscl::MipDataPackets packets = node.getDataPackets(10);
-                    int flag = 0;
+                    mscl::MipDataPackets packets = node.getDataPackets(10); //10 ms = 0.01s = 100hz
                     for(mscl::MipDataPacket packet : packets)
                     {   
-                       //cout << flag<< endl;
-                        // if(flag ==1 ){
-                        //     cout<<"gyx : "<<gyx_temp<<endl;
-                        //     cout<<"gyy : "<<gyy_temp<<endl;
-                        //     cout<<"gyz : "<<gyz_temp<<endl;
-                        //     cout<<"acc_x : "<<acc_buff[0]<<endl;
-                        //     cout<<"acc_y : "<<acc_buff[1]<<endl;
-                        //     cout<<"acc_z : "<<acc_buff[2]<<endl;
-                        //     break;
-                        // }
-                        //cout << "Packet Received: ";
                         mscl::MipDataPoints data = packet.data();
                         mscl::MipDataPoint dataPoint;
                         for(unsigned int itr = 0; itr < data.size(); itr++)
                         {
-                            flag = 1;
                             dataPoint = data[itr];
                             string x = dataPoint.channelName();
                             uint32_t hash = const_hash(x.c_str());
                             switch(hash){
+                                //gyro datas
                                 case const_hash("scaledGyroX"):                        
                                     Data_gx.data = rad2deg(dataPoint.as_float());
-                                    gyx_temp = gyro_to_angle(Data_gx.data, gyx_temp);
-                                    Data_gx.data = gyx_temp;
+                                    gyro_buff[0] = gyro_to_angle(Data_gx.data, gyro_buff[0]);
+                                    Data_gx.data = gyro_buff[0];
                                     gyro_x_pub.publish(Data_gx);
                                     break;
                                 case const_hash("scaledGyroY"):                                 
                                     Data_gy.data = rad2deg(dataPoint.as_float());
-                                    gyy_temp = gyro_to_angle(Data_gy.data, gyy_temp);
-                                    Data_gy.data = gyy_temp;
+                                    gyro_buff[1] = gyro_to_angle(Data_gy.data, gyro_buff[1]);
+                                    Data_gy.data = gyro_buff[1];
                                     gyro_y_pub.publish(Data_gy);
                                     break;
                                 case const_hash("scaledGyroZ"):                                 
                                     Data_gz.data = rad2deg(dataPoint.as_float());
-                                    gyz_temp = gyro_to_angle(Data_gz.data, gyz_temp);
-                                    Data_gz.data = gyz_temp;
+                                    gyro_buff[2] = gyro_to_angle(Data_gz.data, gyro_buff[2]);
+                                    Data_gz.data = gyro_buff[2];
                                     gyro_z_pub.publish(Data_gz);
                                     break;
-                                //////////////// accel data ////////////
-                                //////////////// accel data ////////////
-                                //////////////// accel data ////////////
+                                //accel data
                                 case const_hash("scaledAccelX"):    
                                     acc_buff[0] = dataPoint.as_float();
                                     Data_ax.data = acc_buff[0];                                   
@@ -146,11 +147,24 @@ namespace MoMach_Imu{
                                     acc_buff[2] = dataPoint.as_float(); 
                                     Data_az.data = acc_buff[2];                                   
                                     acc_z_pub.publish(Data_az);
-                                    cout << "in case :"<< acc_buff[2] <<endl;
                                     break;
                             }//switch
                             float * a = RP_calculate(acc_buff);
-                            // cout << "a : "<< a[0] << " b: "<< a[1]<<endl;
+                            RPY_buff[0] = rad2deg(a[0]);
+                            RPY_buff[1] = rad2deg(a[1]);
+
+                            Data_acc_roll.data = 180.0 + RPY_buff[0];
+                            Data_acc_pitch.data = RPY_buff[1];
+                            acc_roll_pub.publish(Data_acc_roll);
+                            acc_pitch_pub.publish(Data_acc_pitch);
+
+                            float * b = Complentary(RPY_buff, gyro_buff);
+                            filitered_rpy[0] = b[0];
+                            filitered_rpy[0] = b[1];
+                            
+                            //cout << "filiterd r: "<<filitered_rpy[0] << "filiterd r: "<< filitered_rpy[1] << endl;
+                            // cout << "RPY_buff[0] : "<< RPY_buff[0] << " RPY_buff[1]: "<< RPY_buff[1]<<endl;
+                            // cout << "gyx_temp    : "<< gyx_temp << "gyy_temp   :" <<gyy_temp <<endl;
                             if(!dataPoint.valid())
                             {
                                 cout << "[Invalid] ";

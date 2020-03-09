@@ -29,23 +29,24 @@ namespace MoMach_Imu{
             void run();
             float gyro_to_angle(float gyro_val, float current_angle);
             float rad2deg(float rad);
-            float *RP_calculate(float *acc_v);
+            float *RP_calculate(float acc_v[]);
+            float *Complentary(float acc_rpy[], float gyro_rpy[]);
 
         private:
-            float gyx_temp = 0;
-            float gyy_temp = 0;
-            float gyz_temp = 0;
-            float accx_temp = 0;
-            float accy_temp = 0;
-            float accz_temp = 0;
-            float acc_buff[2] = {0, };
-            float RPY_buff[2] = {0, };
+            float gyro_buff[3] = {0,}; //deg
+            float acc_buff[3] = {0, }; //rad 
+            float RPY_buff[3] = {0, }; //deg
+            float filitered_rpy[3] = {0,};
             std_msgs::Float32 Data_gx;
             std_msgs::Float32 Data_gy;
             std_msgs::Float32 Data_gz;
             std_msgs::Float32 Data_ax;
             std_msgs::Float32 Data_ay;
             std_msgs::Float32 Data_az;
+
+            std_msgs::Float32 Data_acc_roll;
+            std_msgs::Float32 Data_acc_pitch;
+            //std_msgs::Float32 Data_accz;
 
 
             ros::Publisher acc_x_pub;
@@ -55,6 +56,12 @@ namespace MoMach_Imu{
             ros::Publisher gyro_y_pub;
             ros::Publisher gyro_z_pub;
             ros::Publisher marker_pub;
+
+            ros::Publisher acc_roll_pub;
+            ros::Publisher acc_pitch_pub;
+            ros::Publisher filt_roll_pub;
+            ros::Publisher filt_pitch_pub;
+
     };
 }
 #endif
