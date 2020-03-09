@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include "ros/ros.h"
+#include "ros/console.h"
 #include "sensor_msgs/NavSatFix.h"
 #include "sensor_msgs/Imu.h"
 #include "geometry_msgs/PoseWithCovarianceStamped.h"
@@ -27,14 +28,24 @@ namespace MoMach_Imu{
             ~MoMach_Imu();
             void run();
             float gyro_to_angle(float gyro_val, float current_angle);
+            float rad2deg(float rad);
 
         private:
-            float ahrs_acc_x;
-            float ahrs_acc_y;
-            float ahrs_acc_z;
-            float ahrs_gyro_x;
-            float ahrs_gyro_y;
-            float ahrs_gyro_z;
+            float gyx_temp = 0.;
+            float gyy_temp = 0.;
+            float gyz_temp = 0.;
+            float accx_temp = 0.;
+            float accy_temp = 0.;
+            float accz_temp = 0.;
+
+            std_msgs::Float32 Data_gx;
+            std_msgs::Float32 Data_gy;
+            std_msgs::Float32 Data_gz;
+            std_msgs::Float32 Data_ax;
+            std_msgs::Float32 Data_ay;
+            std_msgs::Float32 Data_az;
+
+
             ros::Publisher acc_x_pub;
             ros::Publisher acc_y_pub;
             ros::Publisher acc_z_pub;

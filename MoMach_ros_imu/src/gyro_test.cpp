@@ -4,6 +4,7 @@
 #include <iostream>
 #include "mscl/mscl.h"
 #include "gyro_test.h"
+#include <cmath>
 using namespace std;
   static constexpr uint32_t const_hash(const char *p) {
     return *p ? static_cast<uint32_t>(*p) + 33 * const_hash(p + 1) :  5381;
@@ -16,10 +17,15 @@ namespace MoMach_Imu{
 
     }
     float MoMach_Imu::gyro_to_angle(float gyro_val, float current_angle){
-        int delta_angle = gyro_val * 0.1;
+        float delta_angle = gyro_val * 0.01; //topic pub 100hz 
         current_angle = current_angle + delta_angle;
         return current_angle;
     }
+
+    float MoMach_Imu::rad2deg(float rad){
+        float ans = (rad*180.)/M_PI;
+        return ans;
+    }      
     void MoMach_Imu::run(){
 
         ros::Time::init();
@@ -63,53 +69,70 @@ namespace MoMach_Imu{
                 marker.ns = "basic_shapes";
                 marker.id = 0;
                 marker.type = shape;
-                int gy_r = 0;
-                int gy_p = 0;
-                int gy_y = 0;
                 // Set the marker action.  Options are ADD, DELETE, and new in ROS Indigo: 3 (DELETEALL)
                 marker.action = visualization_msgs::Marker::ADD;
                 //get all the packets that have been collected, with a timeout of 500 milliseconds
                 try{
-                    mscl::MipDataPackets packets = node.getDataPackets(500);
+                    mscl::MipDataPackets packets = node.getDataPackets(10);
+                    int flag = 0;
                     for(mscl::MipDataPacket packet : packets)
-                    {
-                        cout << "Packet Received: ";
+                    {   
+                        cout << flag<< endl;
+                        if(flag ==1 ){
+                            cout<<gyx_temp<<endl;
+                            cout<<gyy_temp<<endl;
+                            cout<<gyz_temp<<endl;
+                            cout<<accx_temp<<endl;
+                            cout<<accy_temp<<endl;
+                            cout<<accz_temp<<endl;
+                        
+                            break;
+                        }
+                        //cout << "Packet Received: ";
                         mscl::MipDataPoints data = packet.data();
                         mscl::MipDataPoint dataPoint;
                         for(unsigned int itr = 0; itr < data.size(); itr++)
                         {
+                            flag = 1;
                             dataPoint = data[itr];
-
-                            cout << dataPoint.channelName() << ": ";
-                            cout << dataPoint.as_string() << " ";
-                            std_msgs::Float32 myData;
                             string x = dataPoint.channelName();
                             uint32_t hash = const_hash(x.c_str());
                             switch(hash){
-                                case const_hash("scaledGyroX"):                                 
-                                    myData.data = dataPoint.as_float();
-                                    myData.data = gyro_to_angle(myData.data, gy_r);
-                                    gyro_x_pub.publish(myData);
+                                case const_hash("scaledGyroX"):                        
+                                    Data_gx.data = rad2deg(dataPoint.as_float());
+                                    gyx_temp = gyro_to_angle(Data_gx.data, gyx_temp);
+                                    Data_gx.data = gyx_temp;
+                                    gyro_x_pub.publish(Data_gx);
                                     break;
                                 case const_hash("scaledGyroY"):                                 
-                                    myData.data = dataPoint.as_float();
-                                    gyro_y_pub.publish(myData);
+                                    Data_gy.data = rad2deg(dataPoint.as_float());
+                                    gyy_temp = gyro_to_angle(Data_gy.data, gyy_temp);
+                                    Data_gy.data = gyy_temp;
+                                    gyro_y_pub.publish(Data_gy);
                                     break;
                                 case const_hash("scaledGyroZ"):                                 
-                                    myData.data = dataPoint.as_float();
-                                    gyro_z_pub.publish(myData);
+                                    Data_gz.data = rad2deg(dataPoint.as_float());
+                                    gyz_temp = gyro_to_angle(Data_gz.data, gyz_temp);
+                                    Data_gz.data = gyz_temp;
+                                    gyro_z_pub.publish(Data_gz);
                                     break;
                                 case const_hash("scaledAccelX"):                                 
-                                    myData.data = dataPoint.as_float();
-                                    acc_x_pub.publish(myData);
+                                    Data_ax.data = rad2deg(dataPoint.as_float());
+                                    accx_temp = gyro_to_angle(Data_ax.data, accx_temp);
+                                    Data_ax.data = accx_temp;
+                                    acc_x_pub.publish(Data_ax);
                                     break;
                                 case const_hash("scaledAccelY"):                                 
-                                    myData.data = dataPoint.as_float();
-                                    acc_y_pub.publish(myData);
+                                    Data_ay.data = rad2deg(dataPoint.as_float());
+                                    accy_temp = gyro_to_angle(Data_ay.data, accy_temp);
+                                    Data_ay.data = accy_temp;
+                                    acc_y_pub.publish(Data_ay);
                                     break;
                                 case const_hash("scaledAccelZ"):                                 
-                                    myData.data = dataPoint.as_float();
-                                    acc_z_pub.publish(myData);
+                                    Data_az.data = rad2deg(dataPoint.as_float());
+                                    accz_temp = gyro_to_angle(Data_az.data, accz_temp);
+                                    Data_az.data = accz_temp;
+                                    acc_z_pub.publish(Data_az);
                                     break;
                             }//switch
                             if(!dataPoint.valid())
@@ -117,7 +140,6 @@ namespace MoMach_Imu{
                                 cout << "[Invalid] ";
                             }
                         }
-                        cout << endl;
                     }
                 }
                 catch(mscl::Error_Connection){
