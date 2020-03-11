@@ -62,7 +62,8 @@
         "string": "cpp",
         "string_view": "cpp",
         "condition_variable": "cpp",
-        "mutex": "cpp"
+        "mutex": "cpp",
+        "eigen": "cpp"
     },
     "python.autoComplete.extraPaths": [
         "/home/benlee/catkin_ws/devel/lib/python2.7/dist-packages",

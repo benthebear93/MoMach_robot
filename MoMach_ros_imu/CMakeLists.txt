@@ -15,6 +15,11 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_ros
 )
+find_package(cmake_modules REQUIRED)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(Eigen REQUIRED)
+include_directories(${Eigen_INCLUDE_DIRS})
+
 
 find_library(MSCL_LIB_PATH NAMES libmscl.so PATHS "/usr/share/c++-mscl" DOC "MSCL Library" NO_DEFAULT_PATH)
 find_library(BOOST_LIB_PATH NAMES libboost_chrono.so PATHS "/usr/share/c++-mscl/Boost/lib" NO_DEFAULT_PATH)
@@ -40,6 +45,7 @@ catkin_package(
     geometry_msgs
     sensor_msgs
     nav_msgs  
+  DEPENDS Eigen
 )
 ##################
 
@@ -51,16 +57,18 @@ add_library(MoMach_ros_imu
 # Executables
 add_executable(Imu_acc_pub src/gyro_test.cpp
   src/main.cpp)
-target_link_libraries(Imu_acc_pub ${catkin_LIBRARIES})
+target_link_libraries(Imu_acc_pub ${catkin_LIBRARIES} ${Eigen_LIBRARIES})
 add_dependencies(Imu_acc_pub MoMach_ros_imu_gencpp)
 
 target_link_libraries(MoMach_ros_imu
   ${MSCL_LIB_PATH}
   ${catkin_LIBRARIES}
+  ${Eigen_LIBRARIES}
 )
 target_link_libraries(Imu_acc_pub
   MoMach_ros_imu
   ${catkin_LIBRARIES}
+  ${Eigen_LIBRARIES}
 )
 
 include_directories(${catkin_INCLUDE_DIRS}

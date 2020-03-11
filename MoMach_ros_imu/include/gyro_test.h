@@ -32,6 +32,7 @@ namespace MoMach_Imu{
             float *RP_calculate(float acc_v[]);
             float *Complentary(float acc_rpy[], float gyro_rpy[]);
             void init_node();
+            float deg2rad(float deg);
 
         private:
             float gyro_buff[3] = {0,}; //deg
