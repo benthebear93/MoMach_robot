@@ -60,7 +60,9 @@
         "random": "cpp",
         "set": "cpp",
         "string": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "condition_variable": "cpp",
+        "mutex": "cpp"
     },
     "python.autoComplete.extraPaths": [
         "/home/benlee/catkin_ws/devel/lib/python2.7/dist-packages",
