@@ -19,6 +19,12 @@
 #include "std_msgs/Float32.h"
 #include <visualization_msgs/Marker.h>
 #include "mscl/mscl.h"
+#include "sensor_msgs/Imu.h"
+#include "std_msgs/Float64.h"
+#include <sensor_msgs/MagneticField.h>
+#include <geometry_msgs/Vector3Stamped.h>
+#include <tf/transform_datatypes.h>
+#include <tf/transform_broadcaster.h>
 
 namespace MoMach_Imu{
     
@@ -31,14 +37,20 @@ namespace MoMach_Imu{
             float rad2deg(float rad);
             float *RP_calculate(float acc_v[]);
             float *Complentary(float acc_rpy[], float gyro_rpy[]);
-            void init_node();
-            float deg2rad(float deg);
+            void init();
+            void *publish_imu(float a [],float b[], float c[]);
+            std::string frame_id_;
 
         private:
             float gyro_buff[3] = {0,}; //deg
             float acc_buff[3] = {0, }; //rad 
             float RPY_buff[3] = {0, }; //deg
+            float angular_buff[3] = {0,};
             float filitered_rpy[3] = {0,};
+            float *a;
+
+            float quat_buff[3] ={0,}; 
+            float Orientation[4] = {0,};
             std_msgs::Float32 Data_gr;
             std_msgs::Float32 Data_gp;
             std_msgs::Float32 Data_gy;
@@ -51,7 +63,8 @@ namespace MoMach_Imu{
             std_msgs::Float32 Data_fil_roll;
             std_msgs::Float32 Data_fil_pitch;
             //std_msgs::Float32 Data_accz;
-
+            tf::TransformBroadcaster tf_broadcaster_;
+            
 
             // ros::Publisher acc_x_pub;
             // ros::Publisher acc_y_pub;
@@ -60,11 +73,23 @@ namespace MoMach_Imu{
             ros::Publisher gyro_p_pub;
             ros::Publisher gyro_y_pub;
             ros::Publisher marker_pub;
+            ros::Publisher rpy_publisher_;
+            ros::Publisher rpy_publisher;
 
             ros::Publisher acc_roll_pub;
             ros::Publisher acc_pitch_pub;
             ros::Publisher filt_roll_pub;
             ros::Publisher filt_pitch_pub;
+
+            ros::Publisher imu_mag_pub_;
+            ros::Publisher imu_data_pub_;
+            ros::Publisher imu_temperature_pub_;
+            
+            sensor_msgs::Imu imu_data_msg;
+            sensor_msgs::MagneticField imu_magnetic_msg;
+            std_msgs::Float64 imu_temperature_msg;
+
+
 
     };
 }

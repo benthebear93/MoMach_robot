@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
-  tf2
+  tf
   tf2_ros
 )
 find_package(cmake_modules REQUIRED)
@@ -39,7 +39,7 @@ catkin_package(
     include
   CATKIN_DEPENDS
     roscpp
-    tf2
+    tf
     tf2_ros
     std_msgs
     geometry_msgs
