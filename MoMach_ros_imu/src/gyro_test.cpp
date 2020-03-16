@@ -86,12 +86,12 @@ namespace MoMach_Imu{
         imu_data_msg.orientation.w = orientation[3];
 
         imu_data_msg.linear_acceleration.x     =  acc_buff[0] * convertor_g2a;
-        imu_data_msg.linear_acceleration.y     = acc_buff[1] * convertor_g2a;
-        imu_data_msg.linear_acceleration.z     = acc_buff[2] * convertor_g2a;
+        imu_data_msg.linear_acceleration.y     = -acc_buff[1] * convertor_g2a;
+        imu_data_msg.linear_acceleration.z     = -acc_buff[2] * convertor_g2a;
 
         imu_data_msg.angular_velocity.x     =  angluar_buff[0];
-        imu_data_msg.angular_velocity.y     = angluar_buff[1];
-        imu_data_msg.angular_velocity.z     = angluar_buff[2];
+        imu_data_msg.angular_velocity.y     = -angluar_buff[1];
+        imu_data_msg.angular_velocity.z     = -angluar_buff[2];
 
         imu_magnetic_msg.magnetic_field.x =  0;
         imu_magnetic_msg.magnetic_field.y = 0;
@@ -130,10 +130,10 @@ namespace MoMach_Imu{
                     cout << "start :" << start << endl;
                     float gyro_temp = gyro_buff[2];
                     float ten_second = float(end-start);
-                    cout << "ten :" << ten_second << endl;
-                    if(ten_second >10){
-                        cout << "time :" << ten_second << "  "<< gyro_temp/ten_second << "deg/sec" << endl;
-                    }
+                    //cout << "ten :" << ten_second << endl;
+                    // if(ten_second >10){
+                    //     cout << "time :" << ten_second << "  "<< gyro_temp/ten_second << "deg/sec" << endl;
+                    // }
                     for(mscl::MipDataPacket packet : packets)
                     {   
                         chrono::system_clock::time_point StartTime = chrono::system_clock::now();
