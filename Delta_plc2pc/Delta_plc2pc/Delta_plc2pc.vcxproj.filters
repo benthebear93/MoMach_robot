@@ -18,5 +18,8 @@
     <ClCompile Include="plc2pc_socket.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="tcpip_example.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
