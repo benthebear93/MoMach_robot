@@ -39,6 +39,7 @@ void main()
 			(unsigned char)host_ptr->h_addr_list[0][2],
 			(unsigned char)host_ptr->h_addr_list[0][3]);
 	}
+	printf("here?\n");
 	if (client == INVALID_SOCKET)
 		showError("clinet socket fail");
 
