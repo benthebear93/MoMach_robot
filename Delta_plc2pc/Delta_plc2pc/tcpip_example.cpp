@@ -11,10 +11,10 @@ void PrintHexa(char* buff, size_t len);
 
 void main()
 {
-	SOCKET sock;
-	WSADATA wsa;
-	char s_buff[12];
-	char r_buff[12];
+	SOCKET sock;WSADATA wsa;
+	char s_buff[12]; //send
+	char b_buff[11]; //bit read
+	char r_buff[13]; // register read
 	struct sockaddr_in sock_addr;
 	int ret = 0;
 	WSAStartup(MAKEWORD(2, 2), &wsa);
@@ -30,52 +30,51 @@ void main()
 		WSACleanup();
 		return;
 	}
-	memset(s_buff, 0, 12);
-	memset(r_buff, 0, 12);
-	// build form 00 00 / 00 00 /00 06/FF/FF/ FF FF FF FF  = 24 
-	//8C4
-	{ 
-		
-		//for (int i = 0; i < 5; i++) s_buff[i] = 0x00; //MBAP
-		unsigned char d_id = 0x06; //length
-		unsigned char d_rw = 0x01; //unit
-		unsigned char d_way = 0x03; //func
-		unsigned char d_add_base = 0x04;//length
-		unsigned char d_add = 0x10; //length
-		unsigned char read = 0x00; //read
-		unsigned char read_r = 0x01; //len
-		s_buff[0] = 0x00;
-		s_buff[1] = 0xC0;
-		s_buff[2] = 0x00;
-		s_buff[3] = 0x00;
-		s_buff[4] = 0x00;
-		s_buff[5] = d_id;
-		s_buff[6] = d_rw;
-		s_buff[7] = d_way;
-		s_buff[8] = d_add_base;
-		s_buff[9] = d_add;
-		s_buff[10] = read;
-		s_buff[11] = read_r;
-	}
-	PrintHexa(s_buff, 12);
-	send(sock, s_buff, 12, 0);
-	if (send(sock, s_buff, 12, 0) == SOCKET_ERROR) {
-		perror("send()");
-		closesocket(sock);
-		WSACleanup();
-		return;
-	}
-	/*while (ret == 0) {
-		ret = recv(sock, r_buff, 12, 0);
+	int c_num = 0;
+	while(1) {
+		memset(s_buff, 0, 12);
+		memset(b_buff, 0, 10);
+		memset(r_buff, 0, 13);
+		// build form 00 00 / 00 00 /00 06/FF/FF/ FF FF FF FF  = 24 
+		//8C4
+		{
+			for (int i = 0; i < 5; i++) s_buff[i] = 0x00; //MBAP
+			unsigned char len = 0x06; //length
+			unsigned char unit_id = 0x01; //unit id
+			unsigned char func = 0x01; //func(bit read discret : 01, coil : 02,  read input register : 04, read holding  reg : 03)
+			unsigned char read_len = 0x08;//length
+			unsigned char read_len2 = 0x0A; //length
+			unsigned char data = 0x00; //read
+			unsigned char data2 = 0x10; //len
+			s_buff[5] = len;
+			s_buff[6] = unit_id;
+			s_buff[7] = func;
+			s_buff[8] = read_len;
+			s_buff[9] = read_len2;
+			s_buff[10] = data;
+			s_buff[11] = data2;
+		}
+		PrintHexa(s_buff, 12);
+		send(sock, s_buff, 12, 0);
+		if (send(sock, s_buff, 12, 0) == SOCKET_ERROR) {
+			perror("send()");
+			closesocket(sock);
+			WSACleanup();
+			return;
+		}
+		c_num = c_num + 1;
+		printf("%d  recieve : ", c_num);
+		memset(b_buff, 0, 10);
+		memset(r_buff, 0, 13);
+		ret = recv(sock, b_buff, 10, 0);
+		ret = recv(sock, r_buff, 13, 0);
+		if (ret == SOCKET_ERROR) {
+			perror("recv()"); closesocket(sock); WSACleanup();
+			return;
+		}
+		PrintHexa(b_buff, ret);
 		printf("ret(data byte) =  %d\n", ret);
-	}*/
-	ret = recv(sock, r_buff, 12, 0);
-	PrintHexa(r_buff, 12);
-	printf("ret(data byte) =  %d\n", ret);
-	if (ret == SOCKET_ERROR) { 
-		perror("recv()"); closesocket(sock); WSACleanup(); 
-		return; 
-	} 
+	}
 	closesocket(sock); 
 	WSACleanup(); 
 	system("pause");
