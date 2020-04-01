@@ -1,7 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\Delta_plc2pc",
+    "\\x64"
   ],
-  "SelectedNode": "\\Delta_plc2pc.sln",
+  "SelectedNode": "\\Delta_plc2pc\\plc2pc_socket.cpp",
   "PreviewInSolutionExplorer": false
 }
