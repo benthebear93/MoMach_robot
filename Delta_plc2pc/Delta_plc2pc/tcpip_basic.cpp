@@ -7,6 +7,8 @@
 #include <sstream>
 using namespace std;
 
+
+
 char * set_s_buff(char * s_buff, unsigned char add1, unsigned char add2 ){
 	for (int i = 0; i < 5; i++) s_buff[i] = 0x00; //MBAP
 	unsigned char len = 0x06; //length
@@ -54,7 +56,7 @@ void PrintHexa(char* buff, size_t len, int type) {
 	}
 }
 
-int check_data(char *buff) {
+int hex2decimal(char *buff) {
 	int num1 = 0, num2 = 0, num3 = 0;
 	//printf("%02X      %02X \n", (unsigned char)buff[9], (unsigned char)buff[10]);
 	num1 = (unsigned char)buff[9];
@@ -66,27 +68,30 @@ int check_data(char *buff) {
 float *Current_Pos(float encoder_x, float temp_x, float encoder_y, float temp_y) {
 	float increase_x = 0;
 	float increase_y = 0;
-	if (temp_x > encoder_x || temp_y > encoder_y) {
-		if (temp_x > 60000|| temp_y > 60000) { // increase case 60000 to 100
-			//printf(" encoder_x : %f  temp_x : %f ", encoder_x, temp_x);
-			increase_x = ((65535 - temp_x) + encoder_x) / (266.2 * 1000);
-			increase_y = ((65535 - temp_y) + encoder_y) / (65.5 * 1000);
-		}
-		else { // decrease
-			increase_x = (encoder_x - temp_x) / (266.2 * 1000);
-			increase_y = (encoder_y - temp_y) / (65.5 * 1000);
-		}
+
+	if (temp_x > encoder_x) {
+		if (temp_x - encoder_x > 40000) increase_x = (65535 - temp_x + encoder_x) / (266.2 * 1000);
+		else increase_x = -1* (temp_x - encoder_x) / (266.2 * 1000);
 	}
-	else {
-		increase_x = (encoder_x - temp_x) / (266.2 * 1000);
-		increase_y = (encoder_y - temp_y) / (65.5 * 1000);
+	else if (temp_x < encoder_x){
+		if (encoder_x - temp_x > 40000)increase_x = (65535 - encoder_x + temp_x) / (266.2 * 1000);
+		else increase_x = (encoder_x - temp_x) / (266.2 * 1000);
 	}
-	//increase_x = (encoder_x - temp_x) / (266.2 * 1000);
-	//increase_y = (encoder_y - temp_y) / (65.5 * 1000);
-	//printf("increase_x : %f ", increase_x);
-	//printf("increase_y : %f ", increase_y);
-	static float curr_x_y[2];
-	curr_x_y[0] = increase_x;
-	curr_x_y[1] = increase_y;
-	return curr_x_y;
+	else increase_x = 0;
+
+
+	if (temp_y > encoder_y) {
+		if (temp_y - encoder_y > 40000) increase_y = (65535 - temp_y + encoder_y) / (65.5 * 1000);
+		else increase_y = -1 * (temp_y - encoder_y) / (266.2 * 1000);
+	}
+	else if (temp_y < encoder_y) {
+		if (encoder_y - temp_y > 40000) increase_y = (65535 - encoder_y + temp_y) / (266.2 * 1000);
+		else increase_y = (encoder_y - temp_y) / (266.2 * 1000);
+	}
+	else increase_y = 0;
+
+	static float increase_x_y[2];
+	increase_x_y[0] = increase_x;
+	increase_x_y[1] = increase_y;
+	return increase_x_y;
 }
