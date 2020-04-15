@@ -21,8 +21,28 @@ ROS Ver : Melodic
 
    
 
-**MoMach_Imu_ros**
+**MoMach_ros_Imu**
 
 1. Getting gyro & accelerometer sensor data to convert R,P,Y angle and publish by ROS.(C++)
+
+2. Publish /tf, sensor_msgs/Imu for EKF and other packages.
+
+**MoMach_path_visualize**
+
+1. Path visualize with matplotlib(python)  
+problem : Slow
+
+## PLC to Pc Communication
+
+PLC : Delta NC300  
+
+PC : Window10, RPI4 Linux  
+
+Protocol : Modbus TCP/IP Ethernet
+
+1. **Delta_plc2pc** : Read Position data from CNC Controller. Based on Modbus TCP/IP Protocol (PC, C++)
+
+2. **modbus_xy.py** :  Read Position data from CNC and convert to 32bit float. Based on Modbus TCP/IP Protocol(Rpi4, Python)
+
 
 
