@@ -1,7 +1,7 @@
 <launch>
     <node name="pid_simul" pkg="keyence_ros" type="keyence_pid.py">
     </node>
-    <node name="tool_pos_pid_plot" pkg="rqt_plot" type="rqt_plot" args ="/keyence_output_1 /tool_z_pos"> 
+    <node name="tool_pos_pid_plot" pkg="rqt_plot" type="rqt_plot" args ="/keyence_output_1 /tool_z_pos /noise_sensor"> 
     </node>
     <node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/benlee/catkin_ws/src/keyence_ros/bagfiles/data5.bag">
     </node>

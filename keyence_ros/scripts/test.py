@@ -17,7 +17,7 @@ class Spindle_tool:
         self.i_val = 0
         self.vel = 0
         self.plot_pos =[]
-        self.noise = np.random.normal(0,0.005)
+        self.noise = np.random.normal(0,1)
         self.noise_laser_output = 0
 
     def vel_update(self, laser_output):
