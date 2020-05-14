@@ -1,6 +1,5 @@
 #!/usr/bin/env python2
 import rospy
-import cv2
 import numpy as np
 import math
 from std_msgs.msg import Float32
