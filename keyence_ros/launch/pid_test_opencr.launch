@@ -1,0 +1,8 @@
+<launch>
+    <node name="tool_pos_pid_plot" pkg="rqt_plot" type="rqt_plot" args ="/mid_laser /z_distance /error"> 
+    </node>
+    <node pkg="rosbag" type="play" name="player" output="screen" args="--clock /home/benlee/catkin_ws/src/keyence_ros/bagfiles/subset.bag">
+    </node>
+    <node name="start_button" pkg="keyence_ros" type="start_node.py">
+    </node>
+</launch>

@@ -51,31 +51,25 @@ def modbus_start():
 		x_data = client_socket.recv(13)
 		client_socket.sendall(req_x2)
 		x2_data = client_socket.recv(13)
-		client_socket.sendall(req_y)
-		y_data = client_socket.recv(13)
-		client_socket.sendall(req_y2)
-		y2_data = client_socket.recv(13)
+		#client_socket.sendall(req_y)
+		#y_data = client_socket.recv(13)
+		#client_socket.sendall(req_y2)
+		#y2_data = client_socket.recv(13)
 		#print("".join("\\x{:02x}".format(c) for c in x_data))
 		#print("".join("\\x{:02x}".format(c) for c in x2_data))
 		
 		monitor_x = struct.unpack('>f', (x2_data[9:11]+x_data[9:11]))[0]
-		monitor_y = struct.unpack('>f', (y2_data[9:11]+y_data[9:11]))[0]
-		monitor_x = monitor_x/100000
-		monitor_y = monitor_y/100000
-		print("##############################")
-		print("                              ")
-		print("curr x  :", monitor_x)
-		print("curr y  :", monitor_y)
-		print("                              ")
-		print("##############################")
+		#monitor_y = struct.unpack('>f', (y2_data[9:11]+y_data[9:11]))[0]
+		monitor_x = monitor_x/10000
+		#monitor_y = monitor_y/10000
 		pub.publish(monitor_x)
-		pub2.publish(monitor_y)
+		#pub2.publish(monitor_y)
 	client_socket.close()
 
 
 if __name__=='__main__':
 	rospy.init_node('controller_data', anonymous=True)
 	pub = rospy.Publisher('con_odom/x', Float64, queue_size = 10)
-	pub2 = rospy.Publisher('con_odom/y', Float64, queue_size = 10)
+	#pub2 = rospy.Publisher('con_odom/y', Float64, queue_size = 10)
 	modbus_start()
 	

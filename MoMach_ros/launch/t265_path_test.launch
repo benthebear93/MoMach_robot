@@ -1,0 +1,6 @@
+<launch>
+    <node name="data_plot" pkg="rqt_plot" type="rqt_plot" args ="/mid_laser /z_distance /error"> 
+    </node>
+    <node name="controller_data" pkg="MoMach_ros" type="modbus_xy.py">
+    </node>
+</launch>
