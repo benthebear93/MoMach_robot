@@ -7,7 +7,7 @@
 #define stepsPerRevolution 3200
 #define f LOW
 #define b HIGH
-int thr_val = 200;
+int thr_val = 50;
 ros::NodeHandle nh;
 
 float error =0; //pid feedback error
@@ -21,18 +21,22 @@ float error_ = 0;
 
 float p_val = 0;
 float i_val = 0;
-
-float kp = 0.1;
+int pid_val = 0;
+float kp = 15;
 float ki = 0;
 float dv = 0;
 bool dir = 0;
-
+unsigned int vel = 0;
+int vel_pid = 0;
+int step_num = 0;
 int debug_flag =0;
 
 std_msgs::Float32 z_tool;
 std_msgs::Float32 error_val;
+std_msgs::Int16 debug_vel;
 ros::Publisher pub("z_distacne", &z_tool);
 ros::Publisher pub2("error", &error_val);
+ros::Publisher pub3("debug_vel", &debug_vel);
 
 
 void Switch_button( const std_msgs::Int16& swt1){
@@ -68,64 +72,77 @@ void Laser_data(const std_msgs::Float32& laser){
   z_m = laser.data;
 }
 
-void PID_control(){
+void PID_Control(){
   nh.loginfo("control?");
-  if(s_switch == 1){
-    error = z_t - z_m;
-    if(error < 0){ // tool need to go up!
-      nh.loginfo("go up?");
-      digitalWrite(DIR_P, f);//forward(LOW)
-      dir = 0;
+  if(s_switch==1){
+    error_ = z_t - z_m;
+    if(error_ !=0){
+      step_num = step_num +1;
+      error_ = z_t - z_m;
+      if(error_ <= 0.00125){ // tool need to go up!
+        nh.loginfo("go up?");
+        digitalWrite(DIR_P, f);//forward(LOW)
+        p_val = kp*error_;
+        dir = 0;
+        vel = (unsigned int)vel;
+      }
+      else if(error_ >=0.00125){ // tool need to go down!
+        nh.loginfo("go down?");
+        digitalWrite(DIR_P, b);//backward(HIGH)
+        p_val = kp*error_;
+        dir = 1;
+        vel = thr_val - p_val;
+        vel = (unsigned int)vel;
+      }
+      else{
+        digitalWrite(DIR_P, 0);//backward(HIGH)
+        dir = -1;
+      }
+      if(dir==0){
+        digitalWrite(DIR_P, f);//forward(LOW)
+        z_t = z_t + 0.000625;
+      }else if(dir ==1){
+        digitalWrite(DIR_P, b);//backward(HIGH)
+        z_t = z_t - 0.000625;
+      }
+      else{
+        digitalWrite(DIR_P, 0);
+        z_t = z_t;
+      }
+      //i_val = i_val +ki*error*cycle_time;
+      //d_val = kd*(error-error_pre)/cycle_time;
+      stepper_move(vel);
+      if(step_num%2 == 0){
+        pubtest();
+        step_num = 0;
+      }
     }
-    else{ // tool need to go down!
-      nh.loginfo("go down?");
-      digitalWrite(DIR_P, b);//backward(HIGH)
-      dir = 1;
-    }
-    p_val = error*kp;
-    thr_val = thr_val - p_val;
-    if(error != 0){
-      for (int i = 0; i < stepsPerRevolution; i++){
-        if(dir==0){
-          z_t = z_t + 0.000625;
-        }else{
-          z_t = z_t - 0.000625;
-        }
-        digitalWrite(STEP_P, HIGH);
-        delayMicroseconds(thr_val);
-        digitalWrite(STEP_P, LOW);
-        delayMicroseconds(thr_val);
-        //if(i%2 == 0){
-          pubtest();
-        //}
-      }   
-    } 
-  }
-  else{
+  }else{
     stepper_stop(0, f); //speed = delay Ms
   }
 }
-
 void pubtest(){
   z_tool.data = z_t;
   pub.publish(&z_tool);
-  error_val.data = error;
+  error_val.data = error_;
   pub2.publish(&error_val);
+  debug_vel.data = vel;
+  pub3.publish(&debug_vel);
 }
 
 ros::Subscriber<std_msgs::Int16> sub("start_button", Switch_button);
 ros::Subscriber<std_msgs::Int16> sub2("go_back_button", Switch_go_back);
 ros::Subscriber<std_msgs::Int16> sub4("reset_button", Switch_reset);
-ros::Subscriber<std_msgs::Float32> sub3("mid_laser", Laser_data);
+ros::Subscriber<std_msgs::Float32> sub3("kf_z", Laser_data);
 
 void backnforth(){ // for the test only
   if(s_reset == 1){
     if(s_goback == 0){
       nh.loginfo("0.straight");
-      stepper_move(200, f); //speed = delay Ms
+      stepper_move(100, f); //speed = delay Ms
     }else{
       nh.loginfo("1.back");
-      stepper_move(200, b); //speed = delay Ms
+      stepper_move(100, b); //speed = delay Ms
     }
   }
   else{
@@ -150,13 +167,19 @@ void stepper_move(int speed_val, int dir){
 
 void stepper_stop(int speed_val, int dir){
 }
+void stepper_move(int speed_val){
+  digitalWrite(STEP_P, HIGH);
+  delayMicroseconds(vel);
+  digitalWrite(STEP_P, LOW);
+  delayMicroseconds(vel);
+}
 
 void setup() {
   pinMode(STEP_P,OUTPUT);
   pinMode(DIR_P,OUTPUT);
   nh.advertise(pub);
   nh.advertise(pub2);
-    
+  nh.advertise(pub3);
   nh.subscribe(sub);
   nh.subscribe(sub2);
   nh.subscribe(sub3);
@@ -174,7 +197,7 @@ void loop() {
       nh.loginfo("start PID control func");
       debug_flag = 1;
     }
-    PID_control();
+    PID_Control();
   }
   nh.spinOnce();
 }
