@@ -41,11 +41,13 @@ def measurement_update():
 def callback_kf(pose_data):
 	get_x = pose_data.pose.pose.position.x
 	get_y = pose_data.pose.pose.position.y
-	z = np.array([[get_x], [get_y]]) #measurement
+	vel_x = pose_data.twist.twist.linear.x
+	vel_y = pose_data.twist.twist.linear.y	
+	z = np.array([[get_x],[vel_x], [get_y], [vel_y]]) #measurement
 
 	predict_data = np.dot(H,kf.predict())
 	update_data = kf.update(z)
-	print("update_data :", update_data)
+	print("update_data :", update_data, update_data.shape)
 	pub.publish(update_data[0][0])
 	pub3.publish(update_data[1][0])
 	pub2.publish(update_data[2][0])
@@ -68,10 +70,10 @@ if __name__=='__main__':
 	dt = 0.0001339
 	#print("dt :",dt)
 	F = np.array([[1, dt, 0, 0], [0, 1, 0, 0], [0, 0, 1, dt], [0, 0, 0, 1]])
-	H = np.array([[1, 0, 0, 0],[0, 0, 1, 0]])#4x4
+	H = np.array([[1, 0, 0, 0],[0, 1, 0, 0],[0, 0, 1, 0],[0, 0, 0, 1]])#4x4
 	Q = np.array([[0.00003, 0.0, 0.0, 0.0], [0.0, 0.00003, 0.0, 0.0], [0.0, 0.0, 0.00003, 0.0], [0.0, 0.0, 0.0, 0.00003]]) #4x4
-	R = np.array([[3, 0.0], [0.0, 3]])
-	x0 = np.array([[0], [0.0005], [0], [0.0005]]) #measurement
+	R = np.array([[1, 0.0,0.0,0.0], [0.0, 1,0.0,0.0],[0.0, 0.0, 1, 0.0],[0.0, 0.0, 0.0, 1]])
+	x0 = np.array([[0], [0.0], [0], [0.0]]) #measurement
 	kf = KF(F = F, H = H, Q = Q, R = R, x0 = x0)
 	print("get m")
 	get_measurement()

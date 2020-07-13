@@ -78,40 +78,26 @@ void PID_Control(){
     error_ = z_t - z_m;
     if(error_ !=0){
       step_num = step_num +1;
-      error_ = z_t - z_m;
-      if(error_ <= 0.00125){ // tool need to go up!
+      //error_ = z_t - z_m;
+      if(error_ <= 0.00125){ // tool need to go up!s
         nh.loginfo("go up?");
-        digitalWrite(DIR_P, f);//forward(LOW)
-        p_val = kp*error_;
-        dir = 0;
-        vel = (unsigned int)vel;
+        vel = (unsigned int)thr_val;
+        digitalWrite(DIR_P, f);//set dir c 
+        z_t = z_t + 0.000625;
+        stepper_move(vel);
       }
       else if(error_ >=0.00125){ // tool need to go down!
         nh.loginfo("go down?");
-        digitalWrite(DIR_P, b);//backward(HIGH)
-        p_val = kp*error_;
-        dir = 1;
-        vel = thr_val - p_val;
-        vel = (unsigned int)vel;
+        vel = (unsigned int)thr_val;
+        digitalWrite(DIR_P, b);//set dir c 
+        z_t = z_t - 0.000625;
+        stepper_move(vel);
       }
       else{
         digitalWrite(DIR_P, 0);//backward(HIGH)
-        dir = -1;
-      }
-      if(dir==0){
-        digitalWrite(DIR_P, f);//forward(LOW)
-        z_t = z_t + 0.000625;
-      }else if(dir ==1){
-        digitalWrite(DIR_P, b);//backward(HIGH)
-        z_t = z_t - 0.000625;
-      }
-      else{
-        digitalWrite(DIR_P, 0);
-        z_t = z_t;
       }
       //i_val = i_val +ki*error*cycle_time;
       //d_val = kd*(error-error_pre)/cycle_time;
-      stepper_move(vel);
       if(step_num%2 == 0){
         pubtest();
         step_num = 0;
@@ -139,10 +125,10 @@ void backnforth(){ // for the test only
   if(s_reset == 1){
     if(s_goback == 0){
       nh.loginfo("0.straight");
-      stepper_move(100, f); //speed = delay Ms
+      stepper_set(100, f); //speed = delay Ms
     }else{
       nh.loginfo("1.back");
-      stepper_move(100, b); //speed = delay Ms
+      stepper_set(100, b); //speed = delay Ms
     }
   }
   else{
@@ -150,7 +136,7 @@ void backnforth(){ // for the test only
   }
 }
 
-void stepper_move(int speed_val, int dir){
+void stepper_set(int speed_val, int dir){
   digitalWrite(DIR_P, dir);//set dir c 
   for (int i = 0; i < stepsPerRevolution; i++){
     if(dir==LOW){
@@ -165,13 +151,14 @@ void stepper_move(int speed_val, int dir){
   }
 }
 
-void stepper_stop(int speed_val, int dir){
-}
-void stepper_move(int speed_val){
+void stepper_move(unsigned int speed_val){
   digitalWrite(STEP_P, HIGH);
   delayMicroseconds(vel);
   digitalWrite(STEP_P, LOW);
   delayMicroseconds(vel);
+}
+
+void stepper_stop(int speed_val, int dir){
 }
 
 void setup() {

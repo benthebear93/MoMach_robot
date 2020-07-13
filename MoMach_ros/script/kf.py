@@ -47,7 +47,9 @@ def callback_kf(pose_data):
 	# R = np.array([[0.05, 0.0], [0.0, 0.05]])
 	get_x = pose_data.pose.pose.position.x
 	get_y = pose_data.pose.pose.position.y
-	z = np.array([[get_x], [0.01666], [get_y], [0]])
+	vel_x = pose_data.twist.twist.linear.x
+	vel_y = pose_data.twist.twist.linear.y	
+	z = np.array([[get_x], [vel_x], [get_y], [vel_y]])
 	#predict_data = np.dot(H,kf.predict())
 	predict_data = kf.update(z)
 	print("predict_data :", predict_data)
@@ -56,6 +58,8 @@ def callback_kf(pose_data):
 	print("time :", dt)
 	pub.publish(predict_data[0][0])
 	pub2.publish(predict_data[2][0])
+	pub3.publish(predict_data[1][0])
+	pub4.publish(predict_data[3][0])
 
 
 def get_measurement():
@@ -69,12 +73,14 @@ if __name__=='__main__':
 	rospy.init_node('kf', anonymous=True)
 	pub = rospy.Publisher('kf_x',Float64, queue_size =10)
 	pub2 = rospy.Publisher('kf_y',Float64, queue_size =10)
-	dt = 0.001
+	pub3 = rospy.Publisher('kf_vx',Float64, queue_size =10)
+	pub4 = rospy.Publisher('kf_vy',Float64, queue_size =10)
+	dt = 0.01
 	#print("dt :",dt)
 	F = np.array([[1, dt, 0, 0], [0, 1, 0, 0], [0, 0, 1, dt], [0, 0, 0, 1]])
-	H = np.array([[1, 0, 0, 0],[0, 0, 0, 0],[0, 0, 1, 0],[0, 0, 0, 0]])#4x4
-	Q = np.array([[0.5, 0.0, 0.0, 0.0], [0.0, 0.5, 0.0, 0.0], [0.0, 0.0, 0.5, 0.0], [0.0, 0.0, 0.0, 0.5]]) #4x4
-	R = np.array([[0.5, 0.0, 0.0, 0.0], [0.0, 0.5, 0.0, 0.0], [0.0, 0.0, 0.5, 0.0], [0.0, 0.0, 0.0, 0.5]])
+	H = np.array([[1, 0, 0, 0],[0, 1, 0, 0],[0, 0, 1, 0],[0, 0, 0, 1]])#4x4
+	Q = np.array([[0.004, 0.0, 0.0, 0.0], [0.0, 0.004, 0.0, 0.0], [0.0, 0.0, 0.004, 0.0], [0.0, 0.0, 0.0, 0.004]]) #4x4
+	R = np.array([[0.004, 0.0, 0.0, 0.0], [0.0, 0.004, 0.0, 0.0], [0.0, 0.0, 0.004, 0.0], [0.0, 0.0, 0.0, 0.004]])
 	kf = KF(F = F, H = H, Q = Q, R = R)
 	print("get m")
 	get_measurement()

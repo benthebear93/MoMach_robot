@@ -40,7 +40,6 @@ def callback_kf(pose_data):
 
 	predict_data = np.dot(H,kf.predict())
 	update_data = kf.update(z)
-	print("update_data :", update_data)
 	pub.publish(update_data[0])
 
 
@@ -62,5 +61,4 @@ if __name__=='__main__':
 	R = np.array([0.5]).reshape(1, 1)
 	x0 = np.array([[10], [0], [0]]) #measurement
 	kf = KF(F = F, H = H, Q = Q, R = R, x0 = x0)
-	print("get m")
 	get_measurement()
