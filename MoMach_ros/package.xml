@@ -17,11 +17,13 @@
   <build_depend>roslint</build_depend>
   <build_depend>rospy</build_depend>
   <build_depend>sensor_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>std_srvs</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>tf2_ros</build_depend>
   <build_depend>cmake_modules</build_depend>
+  <build_depend>genmsg</build_depend>
 
   <build_export_depend>geometry_msgs</build_export_depend>
   <build_export_depend>nav_msgs</build_export_depend>
@@ -44,6 +46,7 @@
   <exec_depend>std_srvs</exec_depend>
   <exec_depend>tf</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
   <exec_depend>cmake_modules</exec_depend>
 
   <export>

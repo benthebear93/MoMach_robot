@@ -34,12 +34,10 @@ def modbus_start():
 	rate = rospy.Rate(100)
 	print("modbus start")
 	while True:
-		print("here?")
 		req_x = set_modbus_request(1,3,53,104)
 		req_x2 = set_modbus_request(1,3,53,105)
 		req_y = set_modbus_request(1,3,53,106)
 		req_y2 = set_modbus_request(1,3,53,107)
-		
 		client_socket.sendall(req_x)
 		x_data = client_socket.recv(13)
 		client_socket.sendall(req_x2)
