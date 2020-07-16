@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "MoMach_ros/pos_stream.h"
+#include <typeinfo>
 
 using namespace std;
 //#define DELTA_IP "192.168.100.158"
@@ -21,22 +22,29 @@ using namespace std;
 const unsigned char b_read = 0x01;
 const unsigned char b_write = 0x05;
 const unsigned char reg_read = 0x03;
-
+union
+{
+	unsigned long i;
+	float f;
+}u;
 
 void PrintHexa(char* buff, size_t len);
 
 int main(int argc, char**argv){
+
    MoMach_ros::pos_stream pos;
    ros::init(argc, argv, "pos_stream");
    ros::NodeHandle nh;
    ros::Publisher laser_pub = nh.advertise<MoMach_ros::pos_stream>("pos_stream", 100);
    ros::Rate loop_rate(1000); 
    char s_buff[12]; //send
-   char b_buff[11]; //bit read
+   char s2_buff[12]; //send
    char r_buff[13]; // register read
+   char r2_buff[13]; // register read
 
    struct sockaddr_in sock_addr;
    int ret = 0;
+   int ret2 = 0;
    int sockfd;
    sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
    memset(&sock_addr, 0, sizeof(sock_addr));
@@ -52,17 +60,16 @@ int main(int argc, char**argv){
 	}
 	while(ros::ok()){
 		memset(s_buff, 0, 12);
-		memset(b_buff, 0, 10);
 		memset(r_buff, 0, 13);
 	// build form 00 00 / 00 00 /00 06/FF/FF/ FF FF FF FF  = 24 
 		//8C4
-		{
+		/*{
 			for (int i = 0; i < 5; i++) s_buff[i] = 0x00; //MBAP
 			unsigned char len = 0x06; //length
 			unsigned char unit_id = 0x01; //unit id
 			unsigned char func = reg_read; //func(bit read discret : 01, coil : 02,  read input register : 04, read holding  reg : 03)
-			unsigned char read_len = 0x53;//length
-			unsigned char read_len2 = 0x104; //length
+			unsigned char read_len = 0x35;//length
+			unsigned char read_len2 = 0x68; //length
 			unsigned char data = 0x00; //read
 			unsigned char data2 = 0x01; //len
 			s_buff[5] = len;
@@ -72,24 +79,46 @@ int main(int argc, char**argv){
 			s_buff[9] = read_len2;
 			s_buff[10] = data;
 			s_buff[11] = data2;
-		}
+		}*/
 		//PrintHexa(s_buff, 12);
 		//send(sock, s_buff, 12, 0);
+		char s_buff[]={0x00, 0x00, 0x00, 0x00, 0x00,\
+				  0x06, 0x01, 0x03, 0x35, 0x68, \
+				  0x00, 0x01};
+		char s2_buff[]={0x00, 0x00, 0x00, 0x00, 0x00,\
+				   0x06, 0x01, 0x03, 0x35, 0x69, \
+				   0x00, 0x01};
 		if (send(sockfd, s_buff, 12, 0) == -1) {
 			perror("send()");
 			close(sockfd);
 			return 0;
 		}
+		ret = recv(sockfd, r_buff, 11, 0);
+		printf("recv  1: ");
+		PrintHexa(r_buff, ret);
+		if (send(sockfd, s2_buff, 12, 0) == -1) {
+			perror("send2()");
+			close(sockfd);
+			return 0;
+		}
+		ret2 = recv(sockfd, r2_buff, 11, 0);
+		printf("recv  2: ");
+		PrintHexa(r2_buff, ret2);
+		char data[] {r_buff[10], r_buff[9], r2_buff[10], r2_buff[9]};
+		float output_x = *(float*)&data;
+		printf("x data =  %f\n", output_x);
+		//output_xmm = output_x * 0.00001;
+		//printf("%f\n", output_xmm);
 		//memset(b_buff, 0, 10);
-		memset(r_buff, 0, 11);
+		/*memset(r_buff, 0, 11);
 		ret = recv(sockfd, r_buff, 11, 0);
 		if (ret == -1) {
-			perror("recv()"); 
+			perror("recv() in error?"); 
 			close(sockfd);
 			return 0;
 		}
 		printf("recv : ");
-		PrintHexa(r_buff, ret);
+		PrintHexa(r_buff, ret);*/
 		loop_rate.sleep();
 	}
 	close(sockfd); 
