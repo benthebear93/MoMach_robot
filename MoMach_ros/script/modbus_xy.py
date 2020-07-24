@@ -48,9 +48,10 @@ def modbus_start():
 		y2_data = client_socket.recv(13)
 		#print("".join("\\x{:02x}".format(c) for c in x_data))
 		#print("".join("\\x{:02x}".format(c) for c in x2_data))
-		
+		#print("02x",x2_data[10])
 		monitor_x = struct.unpack('>f', (x2_data[9:11]+x_data[9:11]))[0]
 		monitor_y = struct.unpack('>f', (y2_data[9:11]+y_data[9:11]))[0]
+		print(monitor_x)
 		pub.publish(monitor_x)
 		pub2.publish(monitor_y)
 	client_socket.close()
