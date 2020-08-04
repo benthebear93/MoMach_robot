@@ -57,7 +57,7 @@ if __name__=='__main__':
 	#print("dt :",dt)
 	F = np.array([[1, dt, 0], [0, 1, dt], [0, 0, 1]])
 	H = np.array([1, 0, 0]).reshape(1, 3)
-	Q = np.array([[0.05, 0.05, 0.0], [0.05, 0.05, 0.0], [0.0, 0.0, 0.0]])
+	Q = np.array([[0.1, 0.1, 0.0], [0.1, 0.1, 0.0], [0.0, 0.0, 0.0]])
 	R = np.array([0.5]).reshape(1, 1)
 	x0 = np.array([[10], [0], [0]]) #measurement
 	kf = KF(F = F, H = H, Q = Q, R = R, x0 = x0)

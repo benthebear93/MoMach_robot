@@ -1,6 +1,6 @@
 #include "ros/ros.h"
 #include "std_msgs/Float32.h"
-#include "keyence_ros/keyence_laser.h"
+//#include "keyence_ros/keyence_laser.h"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -19,7 +19,7 @@ int main(int argc, char**argv)
     ros::NodeHandle nh;
     //ros::Publisher keyence_output_pub = nh.advertise<keyence_ros::keyence_laser>("keyence_output" ,100);
     ros::Publisher mid_laser_pub = nh.advertise<std_msgs::Float32>("mid_laser" ,100);
-    ros::Rate loop_rate(500); //1000Hz = 0.05sec
+    ros::Rate loop_rate(100); //1000Hz = 0.05sec
 
     int sockfd;
     struct sockaddr_in servaddr,cliaddr;
@@ -49,15 +49,16 @@ int main(int argc, char**argv)
             int n;
             usleep(5000); //simply wait x ms for controller to answer - replace this with an event-driven approach if needed
             n=read(sockfd,recvline,1000); //read socket/received data || ,0,NULL,NULL
+            printf("%d", n);
             recvline[n]=0; //add string termination character 
-            fputs(recvline,stdout); //print received bytes
+            //fputs(recvline,stdout); //print received bytes
             //printf("Received %i Bytes in response: ", n); //print number of bytes
             //for (int i=0; i<n+1; i++) printf("%02X ", (unsigned char)recvline[i]); //output every byte
             //printf("\n");
             //getting measurement value	for OUT1-OUT12
             //read(sockfd,recvline,1000); //read socket/received data || ,0,NULL,NULL
         //int i;
-        for(int i=3; i<=5; i++)
+        for(int i=1; i<=1; i++)
         {
             int msb, lsb, byte2, byte3, outStartBytePosition, outMeasurementValue, byteOffset; //integer-vairables
             double outMeasurementValueMM; //measurement value in mm-scale should be a float value
@@ -69,14 +70,15 @@ int main(int argc, char**argv)
             lsb = (unsigned char)recvline[outStartBytePosition]; //and lsb
             outMeasurementValue = msb << 24 | byte2 << 16 | byte3 << 8 | lsb; //shift bytes to big endian
             outMeasurementValueMM = outMeasurementValue * 0.00001; //since values are stored in 10nm units we have to multiply with factor 0.00001 to reach a mm-scale
+            printf("OUT%i value = %fmm \n", i, outMeasurementValueMM); //output decimal value for OUT1-16
             //printf("OUT%i value = %fmm \n", i, outMeasurementValueMM); //output decimal value for OUT1-16
             //laser_dist.laser_dist[i-3] = outMeasurementValueMM;
-            if(i == 5){
-                mid_laser.data = outMeasurementValueMM;
-                mid_laser_pub.publish(mid_laser);
+            //if(i == 5){
+            mid_laser.data = outMeasurementValueMM;
+            mid_laser_pub.publish(mid_laser);
                 //keyence_output_pub.publish(laser_dist);
                 //ROS_INFO("Value : %f",outMeasurementValueMM);
-            }
+            //}
         }   
         loop_rate.sleep();
         }

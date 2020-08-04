@@ -1,6 +1,6 @@
 #include "ros/ros.h"
 #include "std_msgs/Float32.h"
-#include "keyence_ros/keyence_laser.h"
+//#include "keyence_ros/keyence_laser.h"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -54,6 +54,7 @@ int main(int argc, char**argv)
     			if(i == 5){
     				mid_laser.data = outMeasurementValueMM;
     				mid_laser_pub.publish(mid_laser);
+					printf("%f", mid_laser);
     			}
     		}
     	loop_rate.sleep();

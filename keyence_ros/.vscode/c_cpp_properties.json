@@ -22,6 +22,16 @@
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
             "cppStandard": "c++17"
+        },
+        {
+            "name": "Linux",
+            "includePath": [
+                "/home/benlee/.arduino15/packages/OpenCR/tools/**",
+                "/home/benlee/.arduino15/packages/OpenCR/hardware/OpenCR/1.4.8/**"
+            ],
+            "forcedInclude": [
+                "/home/benlee/.arduino15/packages/OpenCR/hardware/OpenCR/1.4.8/cores/arduino/Arduino.h"
+            ]
         }
     ],
     "version": 4

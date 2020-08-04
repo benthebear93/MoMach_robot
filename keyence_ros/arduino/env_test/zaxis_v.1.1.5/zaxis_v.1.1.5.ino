@@ -174,6 +174,7 @@ void setup() {
 }
 
 void loop() {
+  nh.loginfo("start");
   if(s_reset ==1){
     backnforth();
     debug_flag = 0;
