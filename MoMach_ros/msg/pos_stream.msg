@@ -1,6 +1,6 @@
 Header header
 
-float64 pos_x
-float64 pos_y
-float64 pos_z
+int16 pos_x
+int16 pos_y
+int16 pos_z
 
