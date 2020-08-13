@@ -7,7 +7,7 @@ from __future__ import print_function
 
 import roslib
 import rospy
-from std_msgs.msg import Int16
+from std_msgs.msg import Int32
 import sys, select, termios, tty
 
 msg = """
@@ -37,7 +37,7 @@ def getkey():
 if __name__=="__main__":
 	settings = termios.tcgetattr(sys.stdin)
 
-	pub = rospy.Publisher('zaxis_key_input', Int16, queue_size =10)
+	pub = rospy.Publisher('zaxis_key_input', Int32, queue_size =10)
 	rospy.init_node('zaxis_keyboard_interrupt')
 	resolution = 1
 	z = 0

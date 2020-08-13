@@ -1,6 +1,6 @@
 #include <ros.h>
 #include <std_msgs/Float32.h>
-#include <std_msgs/Int16.h>
+#include <std_msgs/Int32.h>
 #include <pos_stream.h>
 #include <math.h>
 #include <stdlib.h>
@@ -16,12 +16,12 @@ int g_s_switch = 0;
 int g_s_run = 0;
 
 int g_temp_z = 0;
-int g_theta_z = 0;
+int g_diff_z = 0;
 int g_pos_z = 0;
 int g_auto_z = 0;
 int g_zaxis_keyboard = 0;
 
-std_msgs::Int16 tool_pos;
+std_msgs::Int32 tool_pos;
 ros::Publisher pub("tool_pos_msg", &tool_pos);
 
 void StepperMove(int speed_val) 
@@ -32,7 +32,7 @@ void StepperMove(int speed_val)
   delayMicroseconds(speed_val);
 } //motor input
 
-void ZaxisKeyboard(const std_msgs::Int16& zaxis_input)
+void ZaxisKeyboard(const std_msgs::Int32& zaxis_input)
 {
   g_zaxis_keyboard = zaxis_input.data;
   if(g_zaxis_keyboard==1)nh.loginfo("here");
@@ -54,11 +54,11 @@ void GetControlZ(const MoMach_ros::pos_stream& Controller_data)
     tool_z = Controller_data.pos_z;
     g_pos_z = tool_z;
   }
-  ControlMode(g_temp_z, tool_z, 3);
+  ControlMode(g_temp_z, tool_z, 10);
 } // get z axis value from Delta controllerpos_stream
 
 ros::Subscriber<MoMach_ros::pos_stream> sub("pos_stream", GetControlZ);
-ros::Subscriber<std_msgs::Int16> sub2("zaxis_key_input", ZaxisKeyboard);
+ros::Subscriber<std_msgs::Int32> sub2("zaxis_key_input", ZaxisKeyboard);
 
 void setup()
 {
@@ -69,31 +69,28 @@ void setup()
   nh.advertise(pub);
 }
 
+void ToolMove(int difference, int keyboard_input, int dir, int speed_val)
+{
+  digitalWrite(Dir, dir);
+  for(int i = 0; i < mmResolution*abs(difference+keyboard_input); i++)
+  {
+    g_pos_z = g_pos_z + 0.2;
+    nh.loginfo("forward");
+    StepperMove(speed_val);
+  } 
+}
+
 void ControlMode(int prev_z, int curr_z, int speed_val)
 {
   int z_key_input = 0;
-  //if(g_zaxis_keyboard == 0)z_key_input = g_zaxis_keyboard;
-  //else g_zaxis_keyboard = 0;
-  g_theta_z = curr_z - prev_z;
-  if(g_theta_z > 0)
+  g_diff_z = curr_z - prev_z;
+  if(g_diff_z > 0)
   {
-    digitalWrite(Dir, b);
-    for(int i = 0; i < mmResolution*abs(g_theta_z+g_zaxis_keyboard); i++)
-    {
-      g_pos_z = g_pos_z + 0.2;
-      nh.loginfo("forward");
-      StepperMove(speed_val);
-    }
+    ToolMove(g_diff_z, g_zaxis_keyboard, b, speed_val);
   }
-  else if(g_theta_z < 0)
+  else if(g_diff_z < 0)
   {
-    digitalWrite(Dir, f);
-    for(int i = 0; i < mmResolution*abs(g_theta_z+g_zaxis_keyboard); i++)
-    {
-      g_pos_z = g_pos_z - 0.2;
-      nh.loginfo("backward");
-      StepperMove(speed_val);
-    }
+    ToolMove(g_diff_z, g_zaxis_keyboard, f, speed_val);
   }
   else
   {

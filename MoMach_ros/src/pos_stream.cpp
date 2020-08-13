@@ -12,6 +12,7 @@
 #include "MoMach_ros/pos_stream.h"
 #include <typeinfo>
 #include <time.h>
+#include <math.h>
 
 using namespace std;
 #define DELTA_IP "192.168.0.158"
@@ -104,22 +105,17 @@ int main(int argc, char**argv){
 		float output_y = *(float*)&y_data;*/
 		char z_data[] = {z_r_buff[10], z_r_buff[9], z_r2_buff[10], z_r2_buff[9]};
 		float output_z = *(float*)&z_data;
-		pos.pos_z = output_z;
+		//int temp = output_z*1000;
+		//output_z = temp/1000.0;
+		printf("z data =  %f\n", output_z);
+		pos.pos_z = output_z*1000;
 		laser_pub.publish(pos);
 		//printf("x data =  %f\n", output_x);
 		//printf("y data =  %f\n", output_y);
-		printf("z data =  %f\n", output_z);
-		end = time(NULL);
-		double passed_time =(double)(end - start);
-		//printf("passed_time : %f\n", passed_time);
-		if(passed_time >= 100){
-			printf("%d ", DataNum);
-			break;
-		}
+		//printf("z data =  %f\n", output_z);
 		loop_rate.sleep();
 	}
 	close(sockfd); 
-	system("pause");
 }
 
 void PrintHexa(char* buff, size_t len) { 
