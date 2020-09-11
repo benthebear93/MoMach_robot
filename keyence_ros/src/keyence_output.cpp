@@ -11,27 +11,17 @@
 #define KEYENCE "169.254.29.71"
 #define PORT 24691
 
+
 int main(int argc, char**argv)
 {
     std_msgs::Float32 mid_laser;
-    //keyence_ros::keyence_laser laser_dist;
     ros::init(argc, argv, "keyence_output");
     ros::NodeHandle nh;
-    //ros::Publisher keyence_output_pub = nh.advertise<keyence_ros::keyence_laser>("keyence_output" ,100);
     ros::Publisher mid_laser_pub = nh.advertise<std_msgs::Float32>("mid_laser" ,100);
-    ros::Rate loop_rate(100); //1000Hz = 0.05sec
+    ros::Rate loop_rate(60); //1000Hz = 0.05sec
 
     int sockfd;
     struct sockaddr_in servaddr,cliaddr;
-
-    /*if(argc < 2)  //give a hint in case of invalid parameters
-    {
-        printf("usage: LJV7_GetMeasurementValues <IP-Address>\n");
-        return EXIT_FAILURE;
-    }*/
-    //printf("Getting measurement values of Controller @%s \n", KEYENCE); //output status
-
-    //byte-structure/command for getting latest measurement values
     unsigned char LJV_GetMeasurementValues[] = { 0x14, 0x00, 0x00, 0x00, 0x01, 0x00, 0xF0, 0x00, \
                                         0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, \
                                         0x41, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
@@ -42,27 +32,20 @@ int main(int argc, char**argv)
     servaddr.sin_addr.s_addr=inet_addr(KEYENCE);
     servaddr.sin_port=htons(PORT);
     int a = connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr));\
+
+    double init_val = 0;
     if(a == 0){
+        bool init_flag = true;
         while(ros::ok()){
             send(sockfd, LJV_GetMeasurementValues, LJV_GetMeasurementValues_s, MSG_DONTROUTE);
             char recvline[1000];  //byte-buffer for response
             int n;
             usleep(5000); //simply wait x ms for controller to answer - replace this with an event-driven approach if needed
             n=read(sockfd,recvline,1000); //read socket/received data || ,0,NULL,NULL
-            printf("%d", n);
             recvline[n]=0; //add string termination character 
-            //fputs(recvline,stdout); //print received bytes
-            //printf("Received %i Bytes in response: ", n); //print number of bytes
-            //for (int i=0; i<n+1; i++) printf("%02X ", (unsigned char)recvline[i]); //output every byte
-            //printf("\n");
-            //getting measurement value	for OUT1-OUT12
-            //read(sockfd,recvline,1000); //read socket/received data || ,0,NULL,NULL
-        //int i;
-        for(int i=1; i<=1; i++)
-        {
             int msb, lsb, byte2, byte3, outStartBytePosition, outMeasurementValue, byteOffset; //integer-vairables
             double outMeasurementValueMM; //measurement value in mm-scale should be a float value
-            byteOffset = (i-1) * 8; //every Out has an Offset of 8 byte to the prvious one (except Out1 which starts in byte 232) 
+            byteOffset = (0) * 8; //every Out has an Offset of 8 byte to the prvious one (except Out1 which starts in byte 232) 
             outStartBytePosition = 232 + byteOffset; //Out1 measurement value starts with lsb at byte 232 therefore we add OutNumber*8 to 
             msb = (unsigned char)recvline[outStartBytePosition+3]; //due to network byte order, msb is the last of 4 bytes
             byte2 =  (unsigned char)recvline[outStartBytePosition+2]; //followed by byte #2
@@ -70,16 +53,34 @@ int main(int argc, char**argv)
             lsb = (unsigned char)recvline[outStartBytePosition]; //and lsb
             outMeasurementValue = msb << 24 | byte2 << 16 | byte3 << 8 | lsb; //shift bytes to big endian
             outMeasurementValueMM = outMeasurementValue * 0.00001; //since values are stored in 10nm units we have to multiply with factor 0.00001 to reach a mm-scale
-            printf("OUT%i value = %fmm \n", i, outMeasurementValueMM); //output decimal value for OUT1-16
-            //printf("OUT%i value = %fmm \n", i, outMeasurementValueMM); //output decimal value for OUT1-16
-            //laser_dist.laser_dist[i-3] = outMeasurementValueMM;
-            //if(i == 5){
-            mid_laser.data = outMeasurementValueMM;
-            mid_laser_pub.publish(mid_laser);
+            printf("Real OUT value = %fmm \n", outMeasurementValueMM); //output decimal value for OUT1-16
+            if(init_flag ==true){
+                for (int i =0; i < 10; i++){
+                    ROS_INFO("Setting Origin values");
+                    init_val+= outMeasurementValueMM;
+                }
+                init_val = init_val/10.0;
+                printf("Pub OUT value = %fmm \n", init_val);
+                init_flag = false;
+            } // save first 10 data for initialize origin point
+            else{
+                float changes = -init_val + outMeasurementValueMM;
+                printf("OUT value = %fmm \n", changes); //output decimal value for OUT1-16
+                mid_laser.data = changes;
+                mid_laser_pub.publish(mid_laser);
+            }
+            /*
+            if(outMeasurementValueMM < 0){
+                outMeasurementValueMM =-1*outMeasurementValueMM + 80;
+                printf("here?");
+            }
+            else {
+                outMeasurementValueMM = 80 - outMeasurementValueMM;
+                printf("here?2");
+            }*/
                 //keyence_output_pub.publish(laser_dist);
                 //ROS_INFO("Value : %f",outMeasurementValueMM);
             //}
-        }   
         loop_rate.sleep();
         }
     }
