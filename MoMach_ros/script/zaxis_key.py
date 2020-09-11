@@ -39,7 +39,7 @@ if __name__=="__main__":
 
 	pub = rospy.Publisher('zaxis_key_input', Int32, queue_size =10)
 	rospy.init_node('zaxis_keyboard_interrupt')
-	resolution = 1
+	resolution = 100
 	z = 0
 	status = 0
 
