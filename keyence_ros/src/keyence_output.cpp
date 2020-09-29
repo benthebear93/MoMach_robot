@@ -11,14 +11,13 @@
 #define KEYENCE "169.254.29.71"
 #define PORT 24691
 
-
 int main(int argc, char**argv)
 {
     std_msgs::Float32 mid_laser;
     ros::init(argc, argv, "keyence_output");
     ros::NodeHandle nh;
     ros::Publisher mid_laser_pub = nh.advertise<std_msgs::Float32>("mid_laser" ,100);
-    ros::Rate loop_rate(60); //1000Hz = 0.05sec
+    ros::Rate loop_rate(1000); //1000Hz = 0.05sec
 
     int sockfd;
     struct sockaddr_in servaddr,cliaddr;
@@ -54,6 +53,8 @@ int main(int argc, char**argv)
             outMeasurementValue = msb << 24 | byte2 << 16 | byte3 << 8 | lsb; //shift bytes to big endian
             outMeasurementValueMM = outMeasurementValue * 0.00001; //since values are stored in 10nm units we have to multiply with factor 0.00001 to reach a mm-scale
             printf("Real OUT value = %fmm \n", outMeasurementValueMM); //output decimal value for OUT1-16
+            mid_laser.data = outMeasurementValueMM;
+            mid_laser_pub.publish(mid_laser);
             if(init_flag ==true){
                 for (int i =0; i < 10; i++){
                     ROS_INFO("Setting Origin values");
@@ -66,8 +67,8 @@ int main(int argc, char**argv)
             else{
                 float changes = -init_val + outMeasurementValueMM;
                 printf("OUT value = %fmm \n", changes); //output decimal value for OUT1-16
-                mid_laser.data = changes;
-                mid_laser_pub.publish(mid_laser);
+                //mid_laser.data = changes;
+                //mid_laser_pub.publish(mid_laser);
             }
             /*
             if(outMeasurementValueMM < 0){
