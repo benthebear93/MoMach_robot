@@ -1,1 +1,0 @@
-float32[3] laser_dist
