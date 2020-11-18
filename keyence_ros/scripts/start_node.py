@@ -1,4 +1,12 @@
 #!/usr/bin/env python2
+""" 
+start node is for testing z axis platform. each number will start, stop and change direction
+arduino <-> rosserial_server <-> pc
+
+Author : Haegu Lee
+
+"""
+
 import rospy
 import numpy as np
 import math
