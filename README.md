@@ -3,6 +3,10 @@ Mobile Machining robot _ MHM_Lab(UNIST)
 
 Imu sensor : Lord sensing systems 3DM-CX5-15
 
+Laser sensor : LK-G5000+LK-H080
+
+Line scan sensor : LJ-V7080
+
 Linux Ubuntu Ver : 18.04
 
 ROS Ver : Melodic  
