@@ -90,6 +90,7 @@ void LPF::LowPassFilter()
     std_msgs::Float32 surface_laser;
     curr_val_ = (tau_*pre_val_+curr_val_*ts_)/(tau_ + ts_);
     pre_val_ = curr_val_;
+    ROS_INFO("%f", curr_val_);
     surface_laser.data = curr_val_;
     extract_laser_.publish(surface_laser);
 }
@@ -97,7 +98,7 @@ void LPF::LowPassFilter()
 void LPF::Original()
 {
     curr_val_ = lj_val_-lk_val_;
-    cout << "lj : "<< lj_val_ << "lk : "<< lk_val_ << "curr val : " << curr_val_ << endl;
+    //cout << "lj : "<< lj_val_ << "lk : "<< lk_val_ << "curr val : " << curr_val_ << endl;
 }
 
 
@@ -106,13 +107,13 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "lpf");
   LPF lpf;
 
-  ros::Rate loop_rate(100);
+  ros::Rate loop_rate(200);
   while(ros::ok())
   {
     lpf.Original();
     lpf.LowPassFilter();
     ros::spinOnce();
-    //loop_rate.sleep();
+    loop_rate.sleep();
   }
   return 0;
 }
