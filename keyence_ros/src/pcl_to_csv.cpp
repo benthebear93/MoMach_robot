@@ -21,7 +21,10 @@ class Surface{
         bool init();
         double pos_y = 0;
         double temp = 0;
-
+        std::string frame_id;
+        std::string tf_frame;
+        Cloud::Ptr point3d{new Cloud};
+        
     private:
         ros::NodeHandle nh_, pnh_{"~"};
 
@@ -63,29 +66,32 @@ void Surface::pos_cb(const std_msgs::Float32::ConstPtr& msg)
 void Surface::cloud_cb(const sensor_msgs::PointCloud2& msg)
 {
     //std::cout << "msg is :" << typeid(msg).name() << std::endl;
-    pcl::PCLPointCloud2 pcl_pc;
-    pcl_conversions::toPCL(msg, pcl_pc);
-    pcl::PointCloud<pcl::PointXYZ> input_cloud;
-    pcl::fromPCLPointCloud2(pcl_pc, input_cloud);
-    //std::cout <<input_cloud.points[1] << std::endl;
-    for(int i =0; i<16; i++){
-        input_cloud.points[i].y = pos_y;
-    }
-    sensor_msgs::PointCloud2 output;
-    Cloud::Ptr point3d;
+    pcl::PCLPointCloud2 pcl_pc;  // pcl point cloud
+    pcl_conversions::toPCL(msg, pcl_pc);  // sensor msg to pcl
+    pcl::PointCloud<pcl::PointXYZ> input_cloud; // pcl point xyz
+    pcl::fromPCLPointCloud2(pcl_pc, input_cloud); // pcl to Pointcloud 
 
-    std::string frame_id;
-    std::string tf_frame;
     pnh_.param<std::string>("frame_id", tf_frame, std::string("/base_link"));
 
-    point3d.reset(new Cloud);
+    //point3d.reset(new Cloud);
     point3d->header.frame_id  = tf_frame;
-    //point3d->is_dense         = false;
-    //point3d->width            = 16;
-    //point3d->height           = 1;
-    pcl::toROSMsg(*point3d, output);
+    point3d->is_dense         = false;
+    point3d->width            = 16;
+    point3d->height           = 1;
 
-    point_pub_.publish(output);
+    point3d -> points.clear();
+    point3d->points.reserve(16);
+
+    double x = 0,y = 0,z =0;
+    for(int i =0; i<16; i++){
+        std::cout <<"input cloud" << input_cloud.points[i] << std::endl;
+        x = input_cloud.points[i].x;
+        y = pos_y;
+        z = input_cloud.points[i].z;
+        point3d->points.push_back(pcl::PointXYZ(x, y, z));
+        std::cout <<"input cloud" << point3d->points[i] << std::endl;
+    }
+    point_pub_.publish(point3d);
 }
 
 int main(int argc, char**argv)
