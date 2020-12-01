@@ -11,6 +11,10 @@
 #include <vector>
 using namespace std;
 
+struct xyz
+{
+    double x,y,z;
+};
 typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
 const static std::string DEFAULT_FRAME_ID = "lj_v7080_optical_frame";
 class Surface{
@@ -19,16 +23,17 @@ class Surface{
         Surface();
         ~Surface();
         bool init();
-        double pos_y = 0;
-        double temp = 0;
+        double pos_y  = 0;
+        double temp   = 0;
         std::string frame_id;
         std::string tf_frame;
-        Cloud::Ptr point3d{new Cloud};
-        
+        Cloud::Ptr  point3d{new Cloud};
+        vector<xyz> point_storage;
+
     private:
         ros::NodeHandle nh_, pnh_{"~"};
 
-        ros::Publisher point_pub_;
+        ros::Publisher  point_pub_;
         ros::Subscriber posy_sub_;
         ros::Subscriber cloud_sub_;
         
@@ -60,7 +65,6 @@ bool Surface::init()
 void Surface::pos_cb(const std_msgs::Float32::ConstPtr& msg)
 {
     pos_y = msg->data;
-    temp = pos_y;
 }
 
 void Surface::cloud_cb(const sensor_msgs::PointCloud2& msg)
@@ -80,16 +84,25 @@ void Surface::cloud_cb(const sensor_msgs::PointCloud2& msg)
     point3d->height           = 1;
 
     point3d -> points.clear();
-    point3d->points.reserve(16);
-
+    point3d->points.reserve(32);
     double x = 0,y = 0,z =0;
+
     for(int i =0; i<16; i++){
-        std::cout <<"input cloud" << input_cloud.points[i] << std::endl;
+        //std::cout <<"input cloud" << input_cloud.points[i] << std::endl;
         x = input_cloud.points[i].x;
         y = pos_y;
         z = input_cloud.points[i].z;
         point3d->points.push_back(pcl::PointXYZ(x, y, z));
-        std::cout <<"input cloud" << point3d->points[i] << std::endl;
+        //std::cout <<"input cloud" << point3d->points[i] << std::endl;
+        if(y!=temp)
+        {
+            point_storage.push_back({x,y,z});
+            cout << "vector size :" << point_storage.size()<<endl;
+            if(i==15)
+            {
+                temp = pos_y;
+            }
+        }
     }
     point_pub_.publish(point3d);
 }
