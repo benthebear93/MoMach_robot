@@ -92,7 +92,7 @@ int main(int argc, char**argv)
                 outMeasurementValueMM = outMeasurementValue * 0.00001; //since values are stored in 10nm units we have to multiply with factor 0.00001 to reach a mm-scale
                 x = i*0.001;
                 y = pos_y *0.001;
-                z = -outMeasurementValueMM*0.001;
+                z = outMeasurementValueMM;
                 printf("%d :: Real OUT value = %fmm \n",i, outMeasurementValueMM); //output decimal value for OUT1-16
                 pc_msg->points.push_back(pcl::PointXYZ(x, y, z));
             }

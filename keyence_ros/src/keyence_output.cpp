@@ -20,7 +20,7 @@ int main(int argc, char**argv)
     ros::NodeHandle nh;
     ros::Publisher mid_laser_pub = nh.advertise<std_msgs::Float32>("mid_laser" ,100);
     ros::Publisher vertical_error_pub = nh.advertise<std_msgs::Int32>("ver_error" ,100);
-    ros::Rate loop_rate(1000); //1000Hz = 0.05sec
+    ros::Rate loop_rate(500); //1000Hz = 0.05sec
 
     int sockfd;
     struct sockaddr_in servaddr,cliaddr;
@@ -55,13 +55,14 @@ int main(int argc, char**argv)
             lsb = (unsigned char)recvline[outStartBytePosition]; //and lsb
             outMeasurementValue = msb << 24 | byte2 << 16 | byte3 << 8 | lsb; //shift bytes to big endian
             outMeasurementValueMM = outMeasurementValue * 0.00001; //since values are stored in 10nm units we have to multiply with factor 0.00001 to reach a mm-scale
-            if(outMeasurementValueMM<-100){
+            /*if(outMeasurementValueMM<-100){
                 outMeasurementValueMM = - 50;
             }
             else{
                 outMeasurementValueMM = outMeasurementValueMM;
-            }
-            printf("Real OUT value = %fmm \n", outMeasurementValueMM); //output decimal value for OUT1-16
+            }*/
+            ROS_INFO("%f", outMeasurementValueMM);
+            //printf("Real OUT value = %fmm \n", outMeasurementValueMM); //output decimal value for OUT1-16
             //mid_laser.data = outMeasurementValueMM;
             //mid_laser_pub.publish(mid_laser);
             if(init_flag ==true){
@@ -74,11 +75,11 @@ int main(int argc, char**argv)
                 init_flag = false;
             } // save first 10 data for initialize origin point
             else{
-                float changes = -init_val + outMeasurementValueMM;
-                printf("OUT value = %fmm \n", changes); //output decimal value for OUT1-16
+                float changes = outMeasurementValueMM; //-init_val + 
+                //printf("OUT value = %fmm \n", changes); //output decimal value for OUT1-16
                 mid_laser.data = changes;
-                vertical_error.data = changes*100;
-                vertical_error_pub.publish(vertical_error);
+                //vertical_error.data = changes*100;
+                //vertical_error_pub.publish(vertical_error);
                 mid_laser_pub.publish(mid_laser);
             }
             /*
