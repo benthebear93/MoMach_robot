@@ -62,6 +62,35 @@ bagfiles : specimen height measurement data *(topic : /keyence_output_1/data)*
 
 node : /pid_simul *(topic : /tool_z_pos)*, /tool_pos_pid_plot *(rqt_plot)*
 
+# keyence_ros
 
 
+
+#### 1. Line & Laser sesnor node
+
+- **keyence_output** : publish one point data**(/mid_laser)**
+
+- **keyence_profile** : publish 16 point as point cloud data **(/profile)**, publish one point**(/mid_laser)**
+
+- **lk_keyence_output** : publish laser sensor data **(/LK_laser)**
+
+  
+
+#### 2. Point cloud to csv node
+
+- **pcl_to_csv** : save pcl to csv for visualization
+
+Save line scanner Point cloud data, which coming from **keyence_drive_node**(from keyence_experimental package), to csv. 
+
+Raw data from LJ-Series sensor has 800 point which will stored in array and saved to csv. FInal csv has to be modified to visualize point cloud data. 
+
+
+
+### ros command summary
+
+rosrun keyence_ros lk_keyence_output
+
+rosrun keyence_experimental keyence_drive_node controller_ip:=168.254.29.71
+
+rosrun keyence_ros pcl_to_csv
 
