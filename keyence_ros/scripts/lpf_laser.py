@@ -20,7 +20,7 @@ class Laser_data:
         self.curr_val = 0
         self.num_data_count = 0
         self.avg_curr_val = 0
-        self.temp=0
+        self.temp =0
 
     def LowPassFilter(self, tau):
         self.curr_val = (tau*self.pre_val + self.curr_val*ts)/(tau + ts)
@@ -61,7 +61,6 @@ if __name__=='__main__':
     rospy.init_node('lpf_laser', anonymous=True)
     pub = rospy.Publisher('lpf_z',Float32, queue_size =10)
     pub2 = rospy.Publisher('avg_z',Int32, queue_size =10)
-    ts = 0.0001
     print("dt :",ts)
     laser = Laser_data()
     get_measurement()
