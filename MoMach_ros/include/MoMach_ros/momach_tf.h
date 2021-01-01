@@ -16,7 +16,9 @@ Written by Haegu Lee 21/09/20
 #include <iostream>
 #include "std_msgs/Float32.h"
 #include "std_msgs/Int32.h"
-
+#include <assert.h>
+#include <vector>
+#include "typeinfo"
 
 class Momach_tf{
     public:
@@ -24,15 +26,16 @@ class Momach_tf{
         ~Momach_tf();
         MoMach_ros::vector_tf v_tf;
         MoMach_ros::triple_tf tri_tf;
-        std_msgs::Int32 error;
-        position_z;
-    
+        std_msgs::Float32 error;
+        const float offset[3] = {10.0f, 10.0f, 10.0f};
     private:
-        ros::NodeHandle node_;
+        bool init();
+        ros::NodeHandle nh_;
         ros::Publisher vector_pub_;
         ros::Publisher error_pub_;
         ros::Subscriber pos_sub_;
         ros::Subscriber laser_sub_;
-        void LaserCallback(const std_msgs::Float32 & msg)
+        void LaserCallback(const std_msgs::Float32 & msg);
         void PosCallback(const MoMach_ros::pos_stream & msg);
 };
+#endif
