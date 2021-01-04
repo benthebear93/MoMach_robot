@@ -13,20 +13,18 @@ for i in range(0, (929600)):
 	changed_arr = np.where(check == np.inf, 0, check)
 	final.append(list(changed_arr))
 	profile_load[i] = changed_arr
-final = np.array(final)
-v = pptk.viewer(final)
-v.set(point_size = 0.00001)
+final = np.array(final, dtype=np.float32)
+
+pc = pcl.PointCloud(final)
 
 
-pc_array =  np.array([[1,2,3], [3,4,5]], dtype = np.float32)
-print(pc_array)
-
-pc = pcl.PointCloud(pc_array)
-print("pcl.pointcloud", pc, type(pc))
-
-pc = pcl.PointCloud()
-pc.from_array(pc_array)
+#print("pcl.pointcloud", pc, type(pc))
+#pcl.save(pc, 'pocket.pcd')
 
 
 print("pcl.pointcloud form array", pc, type(pc))
 print(pc)
+
+#visualize 
+#v = pptk.viewer(final)
+#v.set(point_size = 0.00001)
