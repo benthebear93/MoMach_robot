@@ -12,7 +12,19 @@ import sensor_msgs.point_cloud2 as pc2
 def read_pcd():
 	print("read pcd start")
 	profile_load = np.load('/home/benlee/Desktop/pptk_save.npy')
-	#infcheck = np.isinf(profile_load)
+	profile_pcd = pcl.load("/home/benlee/Desktop/pocket.pcd")
+
+	fil = profile_pcd.make_statistical_outlier_filter()
+	fil.set_mean_k(10)
+	fil.set_std_dev_mul_thresh(1.0)
+
+	pcl.save(fil.filter(),
+				"/home/benlee/Desktop/inliers.pcd")
+
+	fil.set_negative(True)
+	pcl.save(fil.filter(),
+				"/home/benlee/Desktop/outliers.pcd")
+
 	print(profile_load)
 	final = []
 	for i in range(0, (929600)):
@@ -25,10 +37,11 @@ def read_pcd():
 
 	pc = pcl.PointCloud(final)
 	cloud_new = pcl_helper.pcl_to_ros(pc)
+	#cloud_new = pcl_helper.XYZRGB_to_XYZ(cloud_new)
 	pub.publish(cloud_new)
 
-	print("pcl.pointcloud form array", pc, type(pc))
-	print(pc)
+	#print("pcl.pointcloud form array", pc, type(pc))
+	#print(pc)
 
 if __name__=="__main__":
 	rospy.init_node('cmm_test', anonymous=True)
