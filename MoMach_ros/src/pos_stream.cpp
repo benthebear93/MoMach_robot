@@ -31,11 +31,11 @@ int main(int argc, char**argv){
 	int curr_time = 0;
 
 	MoMach_ros::pos_stream pos;
-	std_msgs::Float32 pos_x;
+	std_msgs::Float32 pos_y;
 	ros::init(argc, argv, "pos_stream");
 	ros::NodeHandle nh;
-	ros::Publisher laser_pub = nh.advertise<MoMach_ros::pos_stream>("pos_stream", 100);
-	ros::Publisher posx = nh.advertise<std_msgs::Float32>("posx", 100);
+	ros::Publisher pos_pub = nh.advertise<MoMach_ros::pos_stream>("pos_stream", 100);
+	ros::Publisher posy = nh.advertise<std_msgs::Float32>("posy", 100);
 	ros::Rate loop_rate(500); 
 	char s_buff[12]; //send
 	char s2_buff[12]; //send
@@ -47,9 +47,8 @@ int main(int argc, char**argv){
 	int ret = 0, ret2 = 0, ret3 = 0, ret4 = 0;
 	int sockfd;
 	sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-	//memset(&sock_addr, 0, sizeof(sock_addr));
 
-	sock_addr.sin_family = AF_INET;
+	sock_addr.sin_family = PF_INET;
 	sock_addr.sin_addr.s_addr = inet_addr(DELTA_IP);
 	sock_addr.sin_port = htons(DELTA_PORT);
 	char x_s_buff[]={0x00, 0x00, 0x00, 0x00, 0x00,\
@@ -66,16 +65,12 @@ int main(int argc, char**argv){
 		close(sockfd);
 		return 0;
 	} // connect check
-	int data = 0;
+	//int data = 0;
 	while(ros::ok()){
-		//memset(x_s_buff, 0, 12);
-		//memset(r_buff, 0, 11); //reset buffers
 		send(sockfd, x_s_buff, 12, 0);
 		ret = recv(sockfd, x_r_buff, 13, 0);
-
 		send(sockfd, y_s_buff, 12, 0);
 		ret2 = recv(sockfd, y_r_buff, 13, 0);
-
 		send(sockfd, z_s_buff, 12, 0);
 		ret3 = recv(sockfd, z_r_buff, 13, 0);
 		
@@ -85,20 +80,15 @@ int main(int argc, char**argv){
 		float output_x = *(float*)&x_data;
 		float output_y = *(float*)&y_data;
 		float output_z = *(float*)&z_data;
-		//int temp = output_z*1000;
-		//output_z = temp/1000.0;
-		printf("[%d]  x data =  %f\n",data, output_x);
-		//printf("  z data =  %f\n", output_z);
-		pos_x.data = output_y;
+		// int temp = output_z*1000;
+		// output_z = temp/1000.0;
+		printf("x = %f  | y = %f | z = %f\n", output_x, output_y, output_z);
+		pos_y.data = output_y;
 		pos.pos_x = output_x*1000;
 		pos.pos_y = output_y*1000;
 		pos.pos_z = output_z*1000;
-		laser_pub.publish(pos);
-		posx.publish(pos_x);
-		//printf("x data =  %f\n", output_x);
-		//printf("y data =  %f\n", output_y);
-		//printf("z data =  %f\n", output_z);
-		data++;
+		pos_pub.publish(pos);
+		posy.publish(pos_y);
 		loop_rate.sleep();
 	}
 	close(sockfd); 
