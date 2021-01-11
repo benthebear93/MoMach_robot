@@ -32,7 +32,7 @@ def do_pass_through_filtering(pc_data):
 	print("passthroguh start")
 	passthrough = pc_data.make_passthrough_filter()
 	passthrough.set_filter_field_name("z")
-	passthrough.set_filter_limits(-35, -10)
+	passthrough.set_filter_limits(-35, -20)
 
 	return passthrough.filter()
 
@@ -52,8 +52,8 @@ def do_statistical_outlier_filter(pc_data, mean, std):
 
 def read_pcd():
 	print("read pcd start")
-	profile_np = np.load('/home/benlee/Desktop/pcd_data/pptk_save.npy')
-	profile_pcd = pcl.load("/home/benlee/Desktop/pcd_data/pocket.pcd")
+	profile_np = np.load('/home/benlee/Desktop/0111pcd/pptk_save_2.npy')
+	profile_pcd = pcl.load("/home/benlee/Desktop/0111pcd/pptk_save_2.pcd")
 
 	return profile_np, profile_pcd
 
@@ -74,7 +74,7 @@ def check_inf(pc_data):
 	modified_pc = []
 	for i in range(0, point_size):
 		temp = pc_data[i]
-		changed_arr = np.where(temp == np.inf, 0, temp)
+		changed_arr = np.where(temp == np.inf, 30, temp)
 
 		modified_pc.append(list(changed_arr))
 		pc_data[i] = changed_arr 	
@@ -88,29 +88,36 @@ def filter_remove():
 
 	# point cloud numpy, pcd read
 	ori_pc = pcl.PointCloud(ori_pc_np) #numpy to pcl
-	print("original size :", ori_pc.size)
-	pcl.save(ori_pc,"/home/benlee/Desktop/ori_cloud.pcd")
 
-	voxel_filtered = do_voxel_grid_downsampling(ori_pc, 0.05) #514,823
+	print("original size :", ori_pc.size)
+	pcl.save(ori_pc,"/home/benlee/Desktop/0111pcd/ori_cloud.pcd")
+	# original 
+
+	voxel_filtered = do_voxel_grid_downsampling(ori_pc, 0.1) #514,823
 	print("voxelfilter size :", voxel_filtered.size)
-	pcl.save(voxel_filtered,"/home/benlee/Desktop/voxel_filtered.pcd")
+	pcl.save(voxel_filtered,"/home/benlee/Desktop/0111pcd/voxel_filtered.pcd")
+	# voxel filter
 
 	pass_filtered_pc = do_pass_through_filtering(voxel_filtered)       ### works
-	pcl.save(pass_filtered_pc,"/home/benlee/Desktop/pass_filtered.pcd")
+	pcl.save(pass_filtered_pc,"/home/benlee/Desktop/0111pcd/pass_filtered.pcd")
 	print("passfilter size :", pass_filtered_pc.size)
+	#pass through
 
-	#inlier_pc, outlier_pc =do_statistical_outlier_filter(pass_filtered_pc, 100, 1.0)  ##statistical filter 
-	#inlier_pc100, outlier_pc =do_statistical_outlier_filter(pass_filtered_pc, 100, 1.0)  ##statistical filter 
-	#pcl.save(inlier_pc,"/home/benlee/Desktop/inlier_pc.pcd")
-	#pcl.save(inlier_pc100,"/home/benlee/Desktop/inlier_pc100.pcd")
-	#statistical outlier filter result save
+	inlier_pc, outlier_pc =do_statistical_outlier_filter(pass_filtered_pc, 300, 5)  ##statistical filter 
+	inlier_pc100, outlier_pc =do_statistical_outlier_filter(pass_filtered_pc, 300, 5)  ##statistical filter 
+	pcl.save(inlier_pc,"/home/benlee/Desktop/inlier_pc.pcd")
+	pcl.save(inlier_pc100,"/home/benlee/Desktop/inlier_pc100.pcd")
+	# statistical outlier
 
-	smoot_pc = do_smoothing(pass_filtered_pc, 0.7)
+	smoot_pc = do_smoothing(inlier_pc, 1)
 	print("smoothing size :", smoot_pc.size)
 	pcl.save(smoot_pc,"/home/benlee/Desktop/smoot_pc.pcd")
-	#visualize(smoot_pc)
+
+	# smoothing 
+	visualize(smoot_pc)
 	final_pc = pcl.PointCloud(smoot_pc) #numpy to pcl
 	print("filtering is done")
+	
 	cloud_new = pcl_helper.pcl_to_ros(final_pc)
 
 	#pointcloud XYZ to ROS PointCloud2 msg
