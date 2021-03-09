@@ -62,6 +62,7 @@ def tool_pos_update(con_odom):
     tool_pos.transform.translation.x = (con_odom.pos_x)*0.001
     tool_pos.transform.translation.y = 0*0.001
     tool_pos.transform.translation.z = 0.001*(con_odom.pos_z) + float(sys.argv[1]) #- float(sys.argv[1]))  #(float(sys.argv[1]))*0.001
+
     q = tf_conversions.transformations.quaternion_from_euler(0 ,0, 0)
     laser.transform.rotation.x = q[0]
     laser.transform.rotation.y = q[1]
@@ -85,3 +86,12 @@ if __name__=='__main__':
     pub = rospy.Publisher('saved_laser_data', Float32MultiArray, queue_size =100)
 
     rospy.spin()
+
+
+if(auto_correction_flag == 0){
+    if(tool_pos.transform.translation.x == laser_buffer.front().x ) auto_correction_flag = 1;
+}
+else{
+    error = laser_buffer.points[i] -tool_pos.transform.roation.z;
+    error_pub.publish(error);
+}
